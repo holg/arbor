@@ -151,8 +151,8 @@ fn extract_function(
             .with_visibility(visibility)
             .with_references(references)
             .with_docstring_if(docstring)
-            .as_async_if(is_async)
-            .as_static_if(is_static),
+            .with_async_if(is_async)
+            .with_static_if(is_static),
     )
 }
 
@@ -373,14 +373,15 @@ fn collect_calls(node: &Node, source: &str, refs: &mut Vec<String>) {
 }
 
 // Builder pattern helpers
+// Builder pattern helpers
 trait CodeNodeExt {
-    fn as_async_if(self, cond: bool) -> Self;
-    fn as_static_if(self, cond: bool) -> Self;
+    fn with_async_if(self, cond: bool) -> Self;
+    fn with_static_if(self, cond: bool) -> Self;
     fn with_docstring_if(self, docstring: Option<String>) -> Self;
 }
 
 impl CodeNodeExt for CodeNode {
-    fn as_async_if(self, cond: bool) -> Self {
+    fn with_async_if(self, cond: bool) -> Self {
         if cond {
             self.as_async()
         } else {
@@ -388,7 +389,7 @@ impl CodeNodeExt for CodeNode {
         }
     }
 
-    fn as_static_if(self, cond: bool) -> Self {
+    fn with_static_if(self, cond: bool) -> Self {
         if cond {
             self.as_static()
         } else {

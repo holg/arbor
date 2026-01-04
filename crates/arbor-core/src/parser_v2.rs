@@ -466,12 +466,12 @@ impl ArborParser {
                     property: (property_identifier) @callee))
         "#;
 
-        let symbols = Query::new(language, symbols_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
-        let imports = Query::new(language, imports_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
-        let calls = Query::new(language, calls_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
+        let symbols =
+            Query::new(language, symbols_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let imports =
+            Query::new(language, imports_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let calls =
+            Query::new(language, calls_query).map_err(|e| ParseError::QueryError(e.message))?;
 
         Ok(CompiledQueries {
             symbols,
@@ -503,12 +503,12 @@ impl ArborParser {
             (call_expression function: (field_expression field: (field_identifier) @callee))
         "#;
 
-        let symbols = Query::new(language, symbols_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
-        let imports = Query::new(language, imports_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
-        let calls = Query::new(language, calls_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
+        let symbols =
+            Query::new(language, symbols_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let imports =
+            Query::new(language, imports_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let calls =
+            Query::new(language, calls_query).map_err(|e| ParseError::QueryError(e.message))?;
 
         Ok(CompiledQueries {
             symbols,
@@ -539,12 +539,12 @@ impl ArborParser {
             (call function: (attribute attribute: (identifier) @callee))
         "#;
 
-        let symbols = Query::new(language, symbols_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
-        let imports = Query::new(language, imports_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
-        let calls = Query::new(language, calls_query)
-            .map_err(|e| ParseError::QueryError(e.message))?;
+        let symbols =
+            Query::new(language, symbols_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let imports =
+            Query::new(language, imports_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let calls =
+            Query::new(language, calls_query).map_err(|e| ParseError::QueryError(e.message))?;
 
         Ok(CompiledQueries {
             symbols,

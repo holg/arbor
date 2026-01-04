@@ -184,7 +184,7 @@ pub fn status(path: &Path) -> Result<()> {
     println!("  {} {}", "Files:".dimmed(), result.files_indexed);
     println!("  {} {}", "Nodes:".dimmed(), result.nodes_extracted);
     println!("  {} {}", "Edges:".dimmed(), result.graph.edge_count());
-    println!("  {} {}", "Languages:".dimmed(), "TypeScript, Rust, Python");
+    println!("  {} TypeScript, Rust, Python", "Languages:".dimmed());
 
     Ok(())
 }

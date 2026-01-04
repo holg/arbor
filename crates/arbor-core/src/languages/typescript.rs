@@ -175,8 +175,8 @@ fn extract_function(
                 Visibility::Private
             })
             .with_references(references)
-            .as_async_if(is_async)
-            .as_exported_if(is_exported),
+            .with_async_if(is_async)
+            .with_exported_if(is_exported),
     )
 }
 
@@ -207,8 +207,8 @@ fn extract_arrow_function(node: &Node, source: &str, file_path: &str) -> Option<
                             .with_column(name_node.start_position().column as u32)
                             .with_signature(signature)
                             .with_references(references)
-                            .as_async_if(is_async)
-                            .as_exported_if(is_exported),
+                            .with_async_if(is_async)
+                            .with_exported_if(is_exported),
                     );
                 }
             }
@@ -236,7 +236,7 @@ fn extract_class(node: &Node, source: &str, file_path: &str) -> Option<CodeNode>
             } else {
                 Visibility::Private
             })
-            .as_exported_if(is_exported),
+            .with_exported_if(is_exported),
     )
 }
 
@@ -274,8 +274,8 @@ fn extract_method(
             .with_signature(signature)
             .with_visibility(visibility)
             .with_references(references)
-            .as_async_if(is_async)
-            .as_static_if(is_static),
+            .with_async_if(is_async)
+            .with_static_if(is_static),
     )
 }
 
@@ -298,7 +298,7 @@ fn extract_interface(node: &Node, source: &str, file_path: &str) -> Option<CodeN
             } else {
                 Visibility::Private
             })
-            .as_exported_if(is_exported),
+            .with_exported_if(is_exported),
     )
 }
 
@@ -316,7 +316,7 @@ fn extract_type_alias(node: &Node, source: &str, file_path: &str) -> Option<Code
             )
             .with_bytes(node.start_byte() as u32, node.end_byte() as u32)
             .with_column(name_node.start_position().column as u32)
-            .as_exported_if(is_exported),
+            .with_exported_if(is_exported),
     )
 }
 
@@ -455,13 +455,13 @@ fn collect_calls(node: &Node, source: &str, refs: &mut Vec<String>) {
 
 // Builder pattern helpers as a trait extension
 trait CodeNodeExt {
-    fn as_async_if(self, cond: bool) -> Self;
-    fn as_static_if(self, cond: bool) -> Self;
-    fn as_exported_if(self, cond: bool) -> Self;
+    fn with_async_if(self, cond: bool) -> Self;
+    fn with_static_if(self, cond: bool) -> Self;
+    fn with_exported_if(self, cond: bool) -> Self;
 }
 
 impl CodeNodeExt for CodeNode {
-    fn as_async_if(self, cond: bool) -> Self {
+    fn with_async_if(self, cond: bool) -> Self {
         if cond {
             self.as_async()
         } else {
@@ -469,7 +469,7 @@ impl CodeNodeExt for CodeNode {
         }
     }
 
-    fn as_static_if(self, cond: bool) -> Self {
+    fn with_static_if(self, cond: bool) -> Self {
         if cond {
             self.as_static()
         } else {
@@ -477,7 +477,7 @@ impl CodeNodeExt for CodeNode {
         }
     }
 
-    fn as_exported_if(self, cond: bool) -> Self {
+    fn with_exported_if(self, cond: bool) -> Self {
         if cond {
             self.as_exported()
         } else {

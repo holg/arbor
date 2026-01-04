@@ -174,7 +174,7 @@ fn extract_function(
             .with_signature(signature)
             .with_visibility(visibility)
             .with_references(references)
-            .as_async_if(is_async),
+            .with_async_if(is_async),
     )
 }
 
@@ -409,11 +409,11 @@ fn collect_calls(node: &Node, source: &str, refs: &mut Vec<String>) {
 
 // Builder pattern helpers
 trait CodeNodeExt {
-    fn as_async_if(self, cond: bool) -> Self;
+    fn with_async_if(self, cond: bool) -> Self;
 }
 
 impl CodeNodeExt for CodeNode {
-    fn as_async_if(self, cond: bool) -> Self {
+    fn with_async_if(self, cond: bool) -> Self {
         if cond {
             self.as_async()
         } else {
