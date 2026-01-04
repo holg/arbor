@@ -1,6 +1,6 @@
 //! CLI command implementations.
 
-use arbor_graph::ranking::compute_centrality;
+use arbor_graph::compute_centrality;
 use arbor_server::{ArborServer, ServerConfig};
 use arbor_watcher::index_directory;
 use colored::Colorize;
@@ -154,7 +154,7 @@ pub async fn serve(port: u16, path: &Path) -> Result<()> {
     println!("{} Listening on ws://127.0.0.1:{}", "✓".green(), port);
     println!("  Press {} to stop", "Ctrl+C".cyan());
 
-    server.run().await?;
+    server.run().await.map_err(|e| e.to_string())?;
 
     Ok(())
 }
