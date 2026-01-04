@@ -1,0 +1,40 @@
+//! Arbor Graph - Code relationship management
+//!
+//! This crate manages the graph of code entities and their relationships.
+//! It provides fast lookups, traversals, and centrality scoring for
+//! prioritizing context in AI queries.
+//!
+//! # Architecture
+//!
+//! The graph uses petgraph internally with additional indexes for:
+//! - Name-based lookups
+//! - File-based grouping (for incremental updates)
+//! - Kind-based filtering
+//!
+//! # Example
+//!
+//! ```no_run
+//! use arbor_graph::ArborGraph;
+//! use arbor_core::{CodeNode, NodeKind};
+//!
+//! let mut graph = ArborGraph::new();
+//!
+//! // Add nodes from parsing
+//! let node = CodeNode::new("validate", "UserService.validate", NodeKind::Method, "user.rs");
+//! let id = graph.add_node(node);
+//!
+//! // Query the graph
+//! let matches = graph.find_by_name("validate");
+//! ```
+
+mod builder;
+mod edge;
+mod graph;
+mod query;
+mod ranking;
+
+pub use builder::GraphBuilder;
+pub use edge::EdgeKind;
+pub use graph::ArborGraph;
+pub use query::{ImpactResult, QueryResult};
+pub use ranking::CentralityScores;

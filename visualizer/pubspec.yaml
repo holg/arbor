@@ -1,0 +1,23 @@
+name: arbor_visualizer
+description: "The Not Boring Logic Forest Visualizer for Arbor"
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.4.0
+  web_socket_channel: ^2.4.0
+  google_fonts: ^6.1.0
+  vector_math: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

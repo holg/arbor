@@ -1,0 +1,21 @@
+[package]
+name = "arbor-watcher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "File watching and incremental indexing for Arbor"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+
+arbor-core = { path = "../arbor-core" }
+arbor-graph = { path = "../arbor-graph" }
+
+notify = "6.0"
+notify-debouncer-mini = "0.4"
+walkdir = "2.4"
+ignore = "0.4"

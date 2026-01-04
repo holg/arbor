@@ -1,0 +1,28 @@
+[package]
+name = "arbor-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Command-line interface for Arbor"
+
+[[bin]]
+name = "arbor"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+
+arbor-core = { path = "../arbor-core" }
+arbor-graph = { path = "../arbor-graph" }
+arbor-watcher = { path = "../arbor-watcher" }
+arbor-server = { path = "../arbor-server" }
+
+clap = { version = "4.0", features = ["derive"] }
+colored = "2.0"
+indicatif = "0.17"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dirs = "5.0"

@@ -1,0 +1,22 @@
+[package]
+name = "arbor-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "WebSocket server implementing the Arbor Protocol"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+
+arbor-core = { path = "../arbor-core" }
+arbor-graph = { path = "../arbor-graph" }
+arbor-watcher = { path = "../arbor-watcher" }
+
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+uuid = { version = "1.0", features = ["v4"] }
+chrono = "0.4"

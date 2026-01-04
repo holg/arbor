@@ -1,0 +1,33 @@
+# Rust
+target/
+Cargo.lock
+*.rs.bk
+
+# Flutter
+visualizer/.dart_tool/
+visualizer/build/
+visualizer/.flutter-plugins
+visualizer/.flutter-plugins-dependencies
+visualizer/.packages
+visualizer/pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Arbor
+.arbor/
+arbor-graph.json
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
