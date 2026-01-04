@@ -439,7 +439,7 @@ fn collect_calls(node: &Node, source: &str, refs: &mut Vec<String>) {
             // Skip common built-ins and method chains on objects
             if !call_name.contains('.') || call_name.starts_with("this.") {
                 refs.push(call_name);
-            } else if let Some(parts) = call_name.split('.').last() {
+            } else if let Some(parts) = call_name.split('.').next_back() {
                 // For chains like foo.bar.baz(), we capture 'baz'
                 refs.push(parts.to_string());
             }

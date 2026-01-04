@@ -110,9 +110,9 @@ pub struct IndexerStatusPayload {
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 enum WatcherEvent {
-    FileChanged(PathBuf),
-    FileCreated(PathBuf),
-    FileDeleted(PathBuf),
+    Changed(PathBuf),
+    Created(PathBuf),
+    Deleted(PathBuf),
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -387,9 +387,9 @@ async fn run_file_watcher(
             pending.remove(&path);
             if should_process_file(&path, &extensions) {
                 let event = if path.exists() {
-                    WatcherEvent::FileChanged(path)
+                    WatcherEvent::Changed(path)
                 } else {
-                    WatcherEvent::FileDeleted(path)
+                    WatcherEvent::Deleted(path)
                 };
                 let _ = tx.send(event).await;
             }
@@ -434,7 +434,7 @@ async fn run_background_indexer(
     broadcast_tx: broadcast::Sender<BroadcastMessage>,
     _root_path: PathBuf,
 ) {
-    let mut parser = ArborParser::new();
+    let mut parser = ArborParser::new().expect("Failed to initialize parser");
 
     info!("🔧 Background indexer started");
 
@@ -442,7 +442,7 @@ async fn run_background_indexer(
         let start = Instant::now();
 
         match event {
-            WatcherEvent::FileChanged(path) | WatcherEvent::FileCreated(path) => {
+            WatcherEvent::Changed(path) | WatcherEvent::Created(path) => {
                 let file_name = path
                     .file_name()
                     .and_then(|n| n.to_str())
@@ -515,7 +515,7 @@ async fn run_background_indexer(
                 }
             }
 
-            WatcherEvent::FileDeleted(path) => {
+            WatcherEvent::Deleted(path) => {
                 let file_str = path.to_string_lossy().to_string();
                 info!("🗑️  File deleted: {}", path.display());
 

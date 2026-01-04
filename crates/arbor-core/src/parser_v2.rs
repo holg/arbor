@@ -84,41 +84,34 @@ struct CompiledQueries {
 
 impl Default for ArborParser {
     fn default() -> Self {
-        Self::new()
+        Self::new().expect("Failed to initialize ArborParser")
     }
 }
 
 impl ArborParser {
     /// Creates a new ArborParser with pre-compiled queries.
-    pub fn new() -> Self {
+    ///
+    /// Returns an error if any language queries fail to compile.
+    pub fn new() -> Result<Self> {
         let parser = Parser::new();
         let mut queries = HashMap::new();
 
         // Compile TypeScript/JavaScript queries
-        if let Ok(compiled) = Self::compile_typescript_queries() {
-            queries.insert("ts".to_string(), compiled);
-        }
-        if let Ok(compiled) = Self::compile_typescript_queries() {
-            queries.insert("tsx".to_string(), compiled);
-        }
-        if let Ok(compiled) = Self::compile_typescript_queries() {
-            queries.insert("js".to_string(), compiled);
-        }
-        if let Ok(compiled) = Self::compile_typescript_queries() {
-            queries.insert("jsx".to_string(), compiled);
+        for ext in &["ts", "tsx", "js", "jsx"] {
+            // We need to recompile for each since Query doesn't implement Clone
+            let compiled = Self::compile_typescript_queries()?;
+            queries.insert(ext.to_string(), compiled);
         }
 
         // Compile Rust queries
-        if let Ok(compiled) = Self::compile_rust_queries() {
-            queries.insert("rs".to_string(), compiled);
-        }
+        let rs_queries = Self::compile_rust_queries()?;
+        queries.insert("rs".to_string(), rs_queries);
 
         // Compile Python queries
-        if let Ok(compiled) = Self::compile_python_queries() {
-            queries.insert("py".to_string(), compiled);
-        }
+        let py_queries = Self::compile_python_queries()?;
+        queries.insert("py".to_string(), py_queries);
 
-        Self { parser, queries }
+        Ok(Self { parser, queries })
     }
 
     /// Parses a file and extracts symbols and relationships.
@@ -154,7 +147,7 @@ impl ArborParser {
 
         // Configure parser for this language
         self.parser
-            .set_language(compiled.language.clone())
+            .set_language(compiled.language)
             .map_err(|e| ParseError::ParserError(format!("Failed to set language: {}", e)))?;
 
         // Parse the source
@@ -199,7 +192,7 @@ impl ArborParser {
             .ok_or_else(|| ParseError::UnsupportedLanguage(file_path.into()))?;
 
         self.parser
-            .set_language(compiled.language.clone())
+            .set_language(compiled.language)
             .map_err(|e| ParseError::ParserError(format!("Failed to set language: {}", e)))?;
 
         let tree = self
@@ -253,31 +246,31 @@ impl ArborParser {
                     "name" | "function.name" | "class.name" | "interface.name" | "method.name" => {
                         name = Some(text);
                     }
-                    "function" | "function.def" => {
+                    "function" | "function_def" => {
                         kind = Some(NodeKind::Function);
                         node = Some(capture.node);
                     }
-                    "class" | "class.def" => {
+                    "class" | "class_def" => {
                         kind = Some(NodeKind::Class);
                         node = Some(capture.node);
                     }
-                    "interface" | "interface.def" => {
+                    "interface" | "interface_def" => {
                         kind = Some(NodeKind::Interface);
                         node = Some(capture.node);
                     }
-                    "method" | "method.def" => {
+                    "method" | "method_def" => {
                         kind = Some(NodeKind::Method);
                         node = Some(capture.node);
                     }
-                    "struct" | "struct.def" => {
+                    "struct" | "struct_def" => {
                         kind = Some(NodeKind::Struct);
                         node = Some(capture.node);
                     }
-                    "enum" | "enum.def" => {
+                    "enum" | "enum_def" => {
                         kind = Some(NodeKind::Enum);
                         node = Some(capture.node);
                     }
-                    "trait" | "trait.def" => {
+                    "trait" | "trait_def" => {
                         kind = Some(NodeKind::Interface);
                         node = Some(capture.node);
                     }
@@ -448,50 +441,22 @@ impl ArborParser {
     fn compile_typescript_queries() -> Result<CompiledQueries> {
         let language = tree_sitter_typescript::language_typescript();
 
-        // Symbol extraction query
+        // Symbol extraction query - simplified for tree-sitter-typescript 0.20
         let symbols_query = r#"
-            ; Functions
-            (function_declaration
-                name: (identifier) @name) @function.def
-
-            ; Arrow functions assigned to variables
-            (lexical_declaration
-                (variable_declarator
-                    name: (identifier) @name
-                    value: (arrow_function))) @function.def
-
-            ; Classes
-            (class_declaration
-                name: (identifier) @name) @class.def
-
-            ; Methods
-            (method_definition
-                name: (property_identifier) @name) @method.def
-
-            ; Interfaces
-            (interface_declaration
-                name: (type_identifier) @name) @interface.def
-
-            ; Type aliases
-            (type_alias_declaration
-                name: (type_identifier) @name) @interface.def
-
-            ; Exported functions
-            (export_statement
-                declaration: (function_declaration
-                    name: (identifier) @name)) @function.def
+            (function_declaration name: (identifier) @name) @function_def
+            (class_declaration name: (type_identifier) @name) @class_def
+            (method_definition name: (property_identifier) @name) @method_def
+            (interface_declaration name: (type_identifier) @name) @interface_def
+            (type_alias_declaration name: (type_identifier) @name) @interface_def
         "#;
 
-        // Import query
+        // Import query - simplified
         let imports_query = r#"
             (import_statement
                 source: (string) @source)
-
-            (import_statement
-                source: (string) @source)
         "#;
 
-        // Call expression query
+        // Call expression query - simplified
         let calls_query = r#"
             (call_expression
                 function: (identifier) @callee)
@@ -501,11 +466,11 @@ impl ArborParser {
                     property: (property_identifier) @callee))
         "#;
 
-        let symbols = Query::new(language.clone(), symbols_query)
+        let symbols = Query::new(language, symbols_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
-        let imports = Query::new(language.clone(), imports_query)
+        let imports = Query::new(language, imports_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
-        let calls = Query::new(language.clone(), calls_query)
+        let calls = Query::new(language, calls_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
 
         Ok(CompiledQueries {
@@ -519,53 +484,30 @@ impl ArborParser {
     fn compile_rust_queries() -> Result<CompiledQueries> {
         let language = tree_sitter_rust::language();
 
+        // Simplified for tree-sitter-rust 0.20
         let symbols_query = r#"
-            ; Functions
-            (function_item
-                name: (identifier) @name) @function.def
-
-            ; Structs
-            (struct_item
-                name: (type_identifier) @name) @struct.def
-
-            ; Enums
-            (enum_item
-                name: (type_identifier) @name) @enum.def
-
-            ; Traits
-            (trait_item
-                name: (type_identifier) @name) @trait.def
-
-            ; Impl methods
-            (impl_item
-                body: (declaration_list
-                    (function_item
-                        name: (identifier) @name) @method.def))
+            (function_item name: (identifier) @name) @function_def
+            (struct_item name: (type_identifier) @name) @struct_def
+            (enum_item name: (type_identifier) @name) @enum_def
+            (trait_item name: (type_identifier) @name) @trait_def
         "#;
 
+        // Simplified imports query - just capture use_declaration
         let imports_query = r#"
-            (use_declaration
-                argument: (use_tree) @source)
+            (use_declaration) @source
         "#;
 
+        // Simplified calls query
         let calls_query = r#"
-            (call_expression
-                function: (identifier) @callee)
-
-            (call_expression
-                function: (field_expression
-                    field: (field_identifier) @callee))
-
-            (call_expression
-                function: (scoped_identifier
-                    name: (identifier) @callee))
+            (call_expression function: (identifier) @callee)
+            (call_expression function: (field_expression field: (field_identifier) @callee))
         "#;
 
-        let symbols = Query::new(language.clone(), symbols_query)
+        let symbols = Query::new(language, symbols_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
-        let imports = Query::new(language.clone(), imports_query)
+        let imports = Query::new(language, imports_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
-        let calls = Query::new(language.clone(), calls_query)
+        let calls = Query::new(language, calls_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
 
         Ok(CompiledQueries {
@@ -579,44 +521,29 @@ impl ArborParser {
     fn compile_python_queries() -> Result<CompiledQueries> {
         let language = tree_sitter_python::language();
 
+        // Simplified for tree-sitter-python 0.20
         let symbols_query = r#"
-            ; Functions
-            (function_definition
-                name: (identifier) @name) @function.def
-
-            ; Classes
-            (class_definition
-                name: (identifier) @name) @class.def
-
-            ; Methods (functions inside classes)
-            (class_definition
-                body: (block
-                    (function_definition
-                        name: (identifier) @name) @method.def))
+            (function_definition name: (identifier) @name) @function_def
+            (class_definition name: (identifier) @name) @class_def
         "#;
 
+        // Simplified imports query
         let imports_query = r#"
-            (import_statement
-                name: (dotted_name) @source)
-
-            (import_from_statement
-                module_name: (dotted_name) @source)
+            (import_statement) @source
+            (import_from_statement) @source
         "#;
 
+        // Simplified calls query
         let calls_query = r#"
-            (call
-                function: (identifier) @callee)
-
-            (call
-                function: (attribute
-                    attribute: (identifier) @callee))
+            (call function: (identifier) @callee)
+            (call function: (attribute attribute: (identifier) @callee))
         "#;
 
-        let symbols = Query::new(language.clone(), symbols_query)
+        let symbols = Query::new(language, symbols_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
-        let imports = Query::new(language.clone(), imports_query)
+        let imports = Query::new(language, imports_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
-        let calls = Query::new(language.clone(), calls_query)
+        let calls = Query::new(language, calls_query)
             .map_err(|e| ParseError::QueryError(e.message))?;
 
         Ok(CompiledQueries {
@@ -637,8 +564,17 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_parser_initialization() {
+        // This test will show us the actual error if query compilation fails
+        match ArborParser::new() {
+            Ok(_) => println!("Parser initialized successfully!"),
+            Err(e) => panic!("Parser failed to initialize: {}", e),
+        }
+    }
+
+    #[test]
     fn test_parse_typescript_symbols() {
-        let mut parser = ArborParser::new();
+        let mut parser = ArborParser::new().unwrap();
 
         let source = r#"
             function greet(name: string): string {
@@ -667,7 +603,7 @@ mod tests {
 
     #[test]
     fn test_parse_typescript_imports() {
-        let mut parser = ArborParser::new();
+        let mut parser = ArborParser::new().unwrap();
 
         let source = r#"
             import { useState } from 'react';
@@ -692,7 +628,7 @@ mod tests {
 
     #[test]
     fn test_parse_typescript_calls() {
-        let mut parser = ArborParser::new();
+        let mut parser = ArborParser::new().unwrap();
 
         let source = r#"
             function outer() {
@@ -720,7 +656,7 @@ mod tests {
 
     #[test]
     fn test_parse_rust_symbols() {
-        let mut parser = ArborParser::new();
+        let mut parser = ArborParser::new().unwrap();
 
         let source = r#"
             fn main() {
@@ -753,7 +689,7 @@ mod tests {
 
     #[test]
     fn test_parse_python_symbols() {
-        let mut parser = ArborParser::new();
+        let mut parser = ArborParser::new().unwrap();
 
         let source = r#"
 def greet(name):
