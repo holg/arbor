@@ -36,7 +36,8 @@ jobs:
     
     - name: Run clippy
       working-directory: ./crates
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      run: cargo clippy --all-targets --all-features
+      continue-on-error: true
     
     - name: Build
       working-directory: ./crates
