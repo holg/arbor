@@ -110,6 +110,7 @@ pub fn index_directory(root: &Path) -> Result<IndexResult, std::io::Error> {
 }
 
 /// Parses a single file and returns its nodes.
+#[allow(dead_code)]
 pub fn parse_single_file(path: &Path) -> Result<Vec<CodeNode>, arbor_core::ParseError> {
     parse_file(path)
 }

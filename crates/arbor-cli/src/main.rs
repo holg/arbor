@@ -5,10 +5,7 @@
 
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use indicatif::{ProgressBar, ProgressStyle};
 use std::path::PathBuf;
-use std::time::Duration;
-use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod commands;

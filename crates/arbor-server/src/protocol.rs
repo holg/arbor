@@ -130,7 +130,7 @@ pub struct ContextParams {
     #[serde(default = "default_max_tokens", rename = "maxTokens")]
     pub max_tokens: usize,
     #[serde(default, rename = "includeSource")]
-    pub include_source: bool,
+    pub _include_source: bool,
 }
 
 /// Params for the search method.

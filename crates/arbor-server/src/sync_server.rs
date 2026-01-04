@@ -108,6 +108,7 @@ pub struct IndexerStatusPayload {
 
 /// Internal event for the file watcher.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 enum WatcherEvent {
     FileChanged(PathBuf),
     FileCreated(PathBuf),
