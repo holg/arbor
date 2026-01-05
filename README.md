@@ -48,19 +48,29 @@ Traditional RAG:         Arbor:
 
 ## Quick Start
 
-```bash
-# Install Arbor CLI
-cargo install arbor-cli
+### Option 1: Download Pre-built Binary (Recommended)
 
-# Initialize in your project
+Download `arbor-windows-v0.1.0.zip` from the [Releases](https://github.com/Anandb71/arbor/releases) page.
+
+```bash
+# Unzip and add to PATH, then:
 cd your-project
 arbor init
-
-# Index your codebase (typically < 2 seconds)
 arbor index
+arbor bridge --viz   # Starts server + opens visualizer
+```
 
-# Start the context sidecar
-arbor serve
+### Option 2: Build from Source
+
+```bash
+# Clone and build
+git clone https://github.com/Anandb71/arbor.git
+cd arbor/crates
+cargo build --release
+
+# Build visualizer (requires Flutter)
+cd ../visualizer
+flutter build windows
 ```
 
 That's it. Your IDE or AI agent can now connect to `ws://localhost:7433` and query the graph.
@@ -85,7 +95,11 @@ Not all code is equal. Arbor ranks nodes by "centrality" — a function called b
 
 ### 🎨 Logic Forest Visualizer
 
-The optional desktop app renders your codebase as an interactive 3D graph. Custom shaders create bloom and glow effects as you navigate. It's not just useful — it's beautiful.
+The optional desktop app renders your codebase as an interactive force-directed graph. Custom shaders create bloom and glow effects as you navigate. Features include:
+
+- **Follow Mode**: Camera automatically tracks the node the AI is focusing on
+- **Low GPU Mode**: Disable effects for better performance on older hardware
+- **Real-time Sync**: Graph updates as you edit code
 
 ## Architecture
 

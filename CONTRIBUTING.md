@@ -76,6 +76,9 @@ cargo run --bin arbor-cli -- serve
 # In another terminal, run the visualizer
 cd visualizer
 flutter run -d windows
+
+# Or start everything together (MCP + Visualizer)
+cargo run --bin arbor-cli -- bridge --viz
 ```
 
 ## Making Changes
