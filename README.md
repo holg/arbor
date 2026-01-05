@@ -231,7 +231,18 @@ We love contributors. Whether you're fixing a typo, adding a language parser, or
 - [x] **Phase 2**: Logic Forest visualizer ✅
 - [x] **Phase 3**: VS Code extension ✅
 - [x] **Phase 4**: Agentic Bridge (MCP) ✅
-- [ ] **Phase 5**: Language server protocol support
+- [x] **Phase 5**: Linux ARM64/AMD64 + macOS ARM64 CI/CD ✅
+- [ ] **Phase 6**: Language server protocol support
+- [ ] **Phase 7**: Go and Java parser support
+
+## Security
+
+Arbor is designed with security in mind:
+
+- **No data exfiltration**: All indexing happens locally; no code leaves your machine
+- **No API keys required**: Works entirely offline
+- **No telemetry**: Zero phone-home behavior
+- **Open source**: Full source code available for audit
 
 ## The Unified Nervous System
 

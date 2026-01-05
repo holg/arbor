@@ -45,3 +45,14 @@ crates/output.log
 crates/response.json
 crates/stderr.txt
 crates/stdout.txt
+
+# Security - Never commit these
+.env
+.env.*
+*.pem
+*.key
+secrets.json
+credentials.json
+
+# Release artifacts (upload to GitHub Releases instead)
+*.zip
