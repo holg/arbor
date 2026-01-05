@@ -264,6 +264,7 @@ Arbor v0.1.0 is **feature-complete**. The entire stack is now synchronized:
 | `arbor viz` | Launch the Logic Forest visualizer |
 | `arbor bridge` | Start MCP server for AI integration |
 | `arbor bridge --viz` | MCP + Visualizer together |
+| `arbor check-health` | System diagnostics and health check |
 
 ## License
 

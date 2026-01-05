@@ -54,6 +54,9 @@ class _ForestViewState extends ConsumerState<ForestView> {
           // Status bar
           _buildStatusBar(state),
 
+          // Settings Panel
+          _buildSettingsPanel(state),
+
           // Loading overlay
           if (state.isLoading)
             Container(
@@ -330,6 +333,75 @@ class _ForestViewState extends ConsumerState<ForestView> {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+  Widget _buildSettingsPanel(GraphState state) {
+    return Positioned(
+      bottom: 48,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: ArborTheme.surface.withValues(alpha:0.9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: ArborTheme.border.withValues(alpha:0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha:0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Follow Toggle
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Follow AI',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: state.isFollowMode ? ArborTheme.function : ArborTheme.textMuted,
+                    fontWeight: state.isFollowMode ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Switch(
+                  value: state.isFollowMode,
+                  activeColor: ArborTheme.function,
+                  onChanged: (_) => ref.read(graphProvider.notifier).toggleFollowMode(),
+                ),
+              ],
+            ),
+            
+            // Low GPU Toggle
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Low GPU',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: state.isLowGpuMode ? ArborTheme.keyword : ArborTheme.textMuted,
+                    fontWeight: state.isLowGpuMode ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Switch(
+                  value: state.isLowGpuMode,
+                  activeColor: ArborTheme.keyword,
+                  onChanged: (_) => ref.read(graphProvider.notifier).toggleLowGpuMode(),
+                ),
+              ],
+            ),
           ],
         ),
       ),

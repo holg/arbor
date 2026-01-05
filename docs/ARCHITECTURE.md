@@ -166,6 +166,17 @@ Command-line interface for end users.
 | `arbor serve` | Start the sidecar server |
 | `arbor export` | Export graph to JSON |
 | `arbor status` | Show index status |
+| `arbor viz` | Launch the Logic Forest visualizer |
+| `arbor bridge` | Start MCP server for AI integration |
+| `arbor bridge --viz` | MCP + Visualizer together |
+| `arbor check-health` | System diagnostics and health check |
+
+### Visualizer Features (v0.1.0)
+
+The Flutter-based Arbor Visualizer includes:
+
+- **Follow Mode**: When enabled (default), the camera automatically animates to the node the AI is currently focusing on.
+- **Low GPU Mode**: Toggle to disable bloom and blur effects for improved performance on lower-end hardware.
 
 ## Data Flow
 

@@ -18,6 +18,7 @@ class ArborTheme {
   static const Color classType = Color(0xFF9D4EDD);   // Royal purple
   static const Color method = Color(0xFF00F5A0);      // Mint green
   static const Color variable = Color(0xFFFFB800);    // Warm amber
+  static const Color keyword = Color(0xFFF72585);     // Neon Pink
   static const Color importType = Color(0xFFFF6B6B); // Coral red
   
   // UI elements

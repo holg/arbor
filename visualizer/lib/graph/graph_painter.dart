@@ -14,6 +14,7 @@ class GraphPainter extends CustomPainter {
   final String? hoveredNodeId;
   final Offset offset;
   final double scale;
+  final bool isLowGpuMode;
 
   GraphPainter({
     required this.nodes,
@@ -22,6 +23,7 @@ class GraphPainter extends CustomPainter {
     this.hoveredNodeId,
     this.offset = Offset.zero,
     this.scale = 1.0,
+    this.isLowGpuMode = false,
   });
 
   @override
@@ -113,8 +115,8 @@ class GraphPainter extends CustomPainter {
 
     final color = ArborTheme.colorForKind(node.kind);
 
-    // Cinematic Bloom (Persistent for important nodes)
-    if (node.centrality > 0.3) {
+    // Cinematic Bloom (Persistent for important nodes) - Disable in Low GPU Mode
+    if (!isLowGpuMode && node.centrality > 0.3) {
        final bloomPaint = Paint()
         ..color = color.withValues(alpha:0.4)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
@@ -123,10 +125,19 @@ class GraphPainter extends CustomPainter {
 
     // Draw glow effect (Interactive)
     if (isSelected || isHovered) {
-      final glowPaint = Paint()
-        ..color = color.withValues(alpha:0.3)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
-      canvas.drawCircle(center, radius * 2, glowPaint);
+      // Simple ring in Low GPU mode, Blur in High GPU
+      if (isLowGpuMode) {
+         final simpleGlowPaint = Paint()
+          ..color = color.withValues(alpha:0.3)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4;
+         canvas.drawCircle(center, radius * 1.5, simpleGlowPaint);
+      } else {
+         final glowPaint = Paint()
+          ..color = color.withValues(alpha:0.3)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+         canvas.drawCircle(center, radius * 2, glowPaint);
+      }
     }
 
     // Draw outer ring
@@ -190,6 +201,7 @@ class GraphPainter extends CustomPainter {
         selectedNodeId != oldDelegate.selectedNodeId ||
         hoveredNodeId != oldDelegate.hoveredNodeId ||
         offset != oldDelegate.offset ||
-        scale != oldDelegate.scale;
+        scale != oldDelegate.scale ||
+        isLowGpuMode != oldDelegate.isLowGpuMode;
   }
 }

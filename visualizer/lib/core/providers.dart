@@ -28,6 +28,10 @@ class GraphState {
   // Stats from server
   final int fileCount;
 
+  // Settings
+  final bool isLowGpuMode;
+  final bool isFollowMode;
+
   const GraphState({
     this.nodes = const [],
     this.edges = const [],
@@ -37,6 +41,8 @@ class GraphState {
     this.selectedNodeId,
     this.spotlightNodeId,
     this.fileCount = 0,
+    this.isLowGpuMode = false,
+    this.isFollowMode = true,
   });
 
   GraphState copyWith({
@@ -48,6 +54,8 @@ class GraphState {
     String? selectedNodeId,
     String? spotlightNodeId,
     int? fileCount,
+    bool? isLowGpuMode,
+    bool? isFollowMode,
   }) {
     return GraphState(
       nodes: nodes ?? this.nodes,
@@ -58,6 +66,8 @@ class GraphState {
       selectedNodeId: selectedNodeId ?? this.selectedNodeId,
       spotlightNodeId: spotlightNodeId,
       fileCount: fileCount ?? this.fileCount,
+      isLowGpuMode: isLowGpuMode ?? this.isLowGpuMode,
+      isFollowMode: isFollowMode ?? this.isFollowMode,
     );
   }
 }
@@ -140,6 +150,14 @@ class GraphNotifier extends StateNotifier<GraphState> {
      } catch (e) {
        // No match found
      }
+  }
+
+  void toggleLowGpuMode() {
+    state = state.copyWith(isLowGpuMode: !state.isLowGpuMode);
+  }
+
+  void toggleFollowMode() {
+    state = state.copyWith(isFollowMode: !state.isFollowMode);
   }
 }
 

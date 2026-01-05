@@ -103,7 +103,7 @@ class _GraphWidgetState extends ConsumerState<GraphWidget>
     }
     
     // Spotlight Tracking: AI Focus Camera Animation
-    if (state.spotlightNodeId != null && state.spotlightNodeId != _lastSpotlightId) {
+    if (state.isFollowMode && state.spotlightNodeId != null && state.spotlightNodeId != _lastSpotlightId) {
       _lastSpotlightId = state.spotlightNodeId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _animateToNode(state.spotlightNodeId!, state.nodes, MediaQuery.of(context).size);
@@ -154,6 +154,7 @@ class _GraphWidgetState extends ConsumerState<GraphWidget>
                 hoveredNodeId: _hoveredNodeId,
                 offset: _offset,
                 scale: _scale,
+                isLowGpuMode: state.isLowGpuMode,
               ),
             ),
           ),
