@@ -30,7 +30,14 @@ jobs:
                 'visualization',
                 'graph',
                 'ai-tools',
-                'static-analysis'
+                'static-analysis',
+                'code-intelligence',
+                'code-navigation',
+                'vscode',
+                'websocket',
+                'json-rpc',
+                'cli',
+                'tree-visualization'
               ]
             });
             console.log('Topics updated successfully!');

@@ -147,7 +147,7 @@ impl ArborParser {
 
         // Configure parser for this language
         self.parser
-            .set_language(compiled.language)
+            .set_language(&compiled.language)
             .map_err(|e| ParseError::ParserError(format!("Failed to set language: {}", e)))?;
 
         // Parse the source
@@ -192,7 +192,7 @@ impl ArborParser {
             .ok_or_else(|| ParseError::UnsupportedLanguage(file_path.into()))?;
 
         self.parser
-            .set_language(compiled.language)
+            .set_language(&compiled.language)
             .map_err(|e| ParseError::ParserError(format!("Failed to set language: {}", e)))?;
 
         let tree = self
@@ -239,10 +239,10 @@ impl ArborParser {
             let mut node = match_.captures.first().map(|c| c.node);
 
             for capture in match_.captures {
-                let capture_name = &compiled.symbols.capture_names()[capture.index as usize];
+                let capture_name = compiled.symbols.capture_names()[capture.index as usize];
                 let text = capture.node.utf8_text(source.as_bytes()).unwrap_or("");
 
-                match capture_name.as_str() {
+                match capture_name {
                     "name" | "function.name" | "class.name" | "interface.name" | "method.name" => {
                         name = Some(text);
                     }
@@ -346,10 +346,10 @@ impl ArborParser {
             let mut line: u32 = 0;
 
             for capture in match_.captures {
-                let capture_name = &compiled.imports.capture_names()[capture.index as usize];
+                let capture_name = compiled.imports.capture_names()[capture.index as usize];
                 let text = capture.node.utf8_text(source.as_bytes()).unwrap_or("");
 
-                match capture_name.as_str() {
+                match capture_name {
                     "source" | "module" | "import.source" => {
                         // Remove quotes from module name
                         module_name = Some(text.trim_matches(|c| c == '"' || c == '\''));
@@ -389,10 +389,10 @@ impl ArborParser {
             let mut call_line: u32 = 0;
 
             for capture in match_.captures {
-                let capture_name = &compiled.calls.capture_names()[capture.index as usize];
+                let capture_name = compiled.calls.capture_names()[capture.index as usize];
                 let text = capture.node.utf8_text(source.as_bytes()).unwrap_or("");
 
-                match capture_name.as_str() {
+                match capture_name {
                     "callee" | "function" | "call.function" => {
                         // Handle method calls like obj.method()
                         if let Some(dot_pos) = text.rfind('.') {
@@ -466,12 +466,12 @@ impl ArborParser {
                     property: (property_identifier) @callee))
         "#;
 
-        let symbols =
-            Query::new(language, symbols_query).map_err(|e| ParseError::QueryError(e.message))?;
-        let imports =
-            Query::new(language, imports_query).map_err(|e| ParseError::QueryError(e.message))?;
-        let calls =
-            Query::new(language, calls_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let symbols = Query::new(&language, symbols_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
+        let imports = Query::new(&language, imports_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
+        let calls = Query::new(&language, calls_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
 
         Ok(CompiledQueries {
             symbols,
@@ -503,12 +503,12 @@ impl ArborParser {
             (call_expression function: (field_expression field: (field_identifier) @callee))
         "#;
 
-        let symbols =
-            Query::new(language, symbols_query).map_err(|e| ParseError::QueryError(e.message))?;
-        let imports =
-            Query::new(language, imports_query).map_err(|e| ParseError::QueryError(e.message))?;
-        let calls =
-            Query::new(language, calls_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let symbols = Query::new(&language, symbols_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
+        let imports = Query::new(&language, imports_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
+        let calls = Query::new(&language, calls_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
 
         Ok(CompiledQueries {
             symbols,
@@ -539,12 +539,12 @@ impl ArborParser {
             (call function: (attribute attribute: (identifier) @callee))
         "#;
 
-        let symbols =
-            Query::new(language, symbols_query).map_err(|e| ParseError::QueryError(e.message))?;
-        let imports =
-            Query::new(language, imports_query).map_err(|e| ParseError::QueryError(e.message))?;
-        let calls =
-            Query::new(language, calls_query).map_err(|e| ParseError::QueryError(e.message))?;
+        let symbols = Query::new(&language, symbols_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
+        let imports = Query::new(&language, imports_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
+        let calls = Query::new(&language, calls_query)
+            .map_err(|e| ParseError::QueryError(e.to_string()))?;
 
         Ok(CompiledQueries {
             symbols,

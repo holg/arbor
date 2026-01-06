@@ -57,7 +57,7 @@ pub fn parse_source(
     // Create and configure Tree-sitter parser
     let mut parser = tree_sitter::Parser::new();
     parser
-        .set_language(lang_parser.language())
+        .set_language(&lang_parser.language())
         .map_err(|e| ParseError::ParserError(format!("Failed to set language: {}", e)))?;
 
     // Parse the source
