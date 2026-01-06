@@ -365,7 +365,7 @@ int main(int argc, char *argv[]) {
 
         let parser = CParser;
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(parser.language()).unwrap();
+        ts_parser.set_language(&parser.language()).unwrap();
         let tree = ts_parser.parse(source, None).unwrap();
 
         let nodes = parser.extract_nodes(&tree, source, "main.c");
@@ -389,7 +389,7 @@ struct Point {
 
         let parser = CParser;
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(parser.language()).unwrap();
+        ts_parser.set_language(&parser.language()).unwrap();
         let tree = ts_parser.parse(source, None).unwrap();
 
         let nodes = parser.extract_nodes(&tree, source, "point.h");
@@ -408,7 +408,7 @@ void public_func() {}
 
         let parser = CParser;
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(parser.language()).unwrap();
+        ts_parser.set_language(&parser.language()).unwrap();
         let tree = ts_parser.parse(source, None).unwrap();
 
         let nodes = parser.extract_nodes(&tree, source, "test.c");

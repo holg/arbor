@@ -199,6 +199,7 @@ See [docs/PROTOCOL.md](docs/PROTOCOL.md) for the full specification.
 | Java       | ✅     | tree-sitter-java |
 | C          | ✅     | tree-sitter-c |
 | C++        | ✅     | tree-sitter-cpp |
+| Dart       | ✅     | tree-sitter-dart |
 
 Adding a new language? See our [language contribution guide](docs/ADDING_LANGUAGES.md).
 
@@ -250,9 +251,9 @@ We love contributors. Whether you're fixing a typo, adding a language parser, or
 - [x] **Phase 4**: Agentic Bridge (MCP) ✅
 - [x] **Phase 5**: Linux ARM64/AMD64 + macOS ARM64 CI/CD ✅
 - [ ] **Phase 6**: Language server protocol support
-- [ ] **Phase 7**: Go and Java parser support
-- [ ] **Phase 8**: C/C++ parser support
-- [ ] **Phase 9**: Dart/Flutter parser support
+- [x] **Phase 7**: Go and Java parser support
+- [x] **Phase 8**: C/C++ parser support
+- [x] **Phase 9**: Dart/Flutter parser support
 
 ## Security
 

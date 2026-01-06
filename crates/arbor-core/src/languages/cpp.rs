@@ -502,7 +502,7 @@ public:
 
         let parser = CppParser;
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(parser.language()).unwrap();
+        ts_parser.set_language(&parser.language()).unwrap();
         let tree = ts_parser.parse(source, None).unwrap();
 
         let nodes = parser.extract_nodes(&tree, source, "myclass.cpp");
@@ -526,7 +526,7 @@ namespace MyLib {
 
         let parser = CppParser;
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(parser.language()).unwrap();
+        ts_parser.set_language(&parser.language()).unwrap();
         let tree = ts_parser.parse(source, None).unwrap();
 
         let nodes = parser.extract_nodes(&tree, source, "mylib.cpp");
@@ -547,7 +547,7 @@ struct Point {
 
         let parser = CppParser;
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(parser.language()).unwrap();
+        ts_parser.set_language(&parser.language()).unwrap();
         let tree = ts_parser.parse(source, None).unwrap();
 
         let nodes = parser.extract_nodes(&tree, source, "point.hpp");
@@ -567,7 +567,7 @@ void myFunction(int x) {
 
         let parser = CppParser;
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(parser.language()).unwrap();
+        ts_parser.set_language(&parser.language()).unwrap();
         let tree = ts_parser.parse(source, None).unwrap();
 
         let nodes = parser.extract_nodes(&tree, source, "main.cpp");
