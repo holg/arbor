@@ -250,6 +250,7 @@ We love contributors. Whether you're fixing a typo, adding a language parser, or
 - [ ] **Phase 6**: Language server protocol support
 - [ ] **Phase 7**: Go and Java parser support
 - [ ] **Phase 8**: C/C++ parser support
+- [ ] **Phase 9**: Dart/Flutter parser support
 
 ## Security
 
