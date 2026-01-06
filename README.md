@@ -249,6 +249,7 @@ We love contributors. Whether you're fixing a typo, adding a language parser, or
 - [x] **Phase 5**: Linux ARM64/AMD64 + macOS ARM64 CI/CD ✅
 - [ ] **Phase 6**: Language server protocol support
 - [ ] **Phase 7**: Go and Java parser support
+- [ ] **Phase 8**: C/C++ parser support
 
 ## Security
 
