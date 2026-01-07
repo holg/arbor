@@ -163,9 +163,9 @@ arbor/
 
 ## Security
 
-Arbor is designed with security in mind:
+Arbor is designed with a **Local-First** security model:
 
-- **No data exfiltration**: All indexing happens locally; no code leaves your machine.
+- **No data exfiltration**: All indexing and querying happens 100% locally. No code leaves your machine.
 - **No API keys required**: Works entirely offline.
 - **No telemetry**: Zero phone-home behavior.
 - **Open source**: Full source code available for audit.
