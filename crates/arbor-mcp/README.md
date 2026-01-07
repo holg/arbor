@@ -1,25 +1,64 @@
-# Arbor MCP Server
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Anandb71/arbor/main/docs/assets/arbor-logo.svg" alt="Arbor" width="60" height="60" />
+</p>
 
-The **Model Context Protocol (MCP)** implementation for Arbor.
+<h1 align="center">arbor-mcp</h1>
 
-This crate allows AI assistants (like Claude Desktop) to connect directly to the Arbor graph to query code context, understand dependencies, and navigate the "Logic Forest" of your codebase.
+<p align="center">
+  <strong>Model Context Protocol server for Arbor</strong><br>
+  <em>Let Claude walk your code graph</em>
+</p>
 
-## Features
+<p align="center">
+  <a href="https://crates.io/crates/arbor-mcp"><img src="https://img.shields.io/crates/v/arbor-mcp?style=flat-square&color=blue" alt="Crates.io" /></a>
+  <a href="https://registry.modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-registered-purple?style=flat-square" alt="MCP" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
+</p>
 
-- **Context Tools**: `get_logic_context`, `analyze_impact`
-- **Architectural Brief**: Returns context as structured Markdown tables
-- **Spotlight Protocol**: Triggers visual feedback in VS Code and the Arbor Visualizer when the AI focuses on a node.
+---
+
+## Overview
+
+`arbor-mcp` is the **AI Bridge** for [Arbor](https://github.com/Anandb71/arbor). It implements the [Model Context Protocol](https://modelcontextprotocol.io/) to let LLMs like Claude Desktop navigate your codebase as a graph.
+
+## MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_context` | Retrieve semantic neighborhood of a node |
+| `find_path` | A* shortest path between two nodes |
+| `analyze_impact` | Predict blast radius of changes |
+| `list_symbols` | Fuzzy search across the graph |
+
+## Why MCP?
+
+Instead of RAG-style "find similar text," Arbor lets the AI:
+
+- **Walk the call graph** to understand control flow
+- **Trace imports** to find the real source of a symbol
+- **Predict impact** before making changes
 
 ## Usage
 
-This crate is typically run via the `arbor-cli`:
-
 ```bash
-arbor bridge
+cargo install arbor-graph-cli
+arbor bridge  # Starts MCP server over stdio
 ```
 
-But it can be used as a library to embed Arbor capability into other Rust MCP servers.
+### Claude Desktop Config
 
-## Documentation
+```json
+{
+  "mcpServers": {
+    "arbor": {
+      "command": "arbor",
+      "args": ["bridge"]
+    }
+  }
+}
+```
 
-For full documentation, see the [main repository](https://github.com/Anandb71/arbor).
+## Links
+
+- **Main Repository**: [github.com/Anandb71/arbor](https://github.com/Anandb71/arbor)
+- **MCP Registry**: `io.github.Anandb71/arbor`

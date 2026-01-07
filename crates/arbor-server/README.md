@@ -1,28 +1,60 @@
-# Arbor Server
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Anandb71/arbor/main/docs/assets/arbor-logo.svg" alt="Arbor" width="60" height="60" />
+</p>
 
-The WebSocket server component of **Arbor**.
+<h1 align="center">arbor-server</h1>
 
-It exposes the Arbor graph via a JSON-RPC 2.0 interface, allowing IDE extensions, visualization tools, and other clients to query the code graph in real-time.
+<p align="center">
+  <strong>WebSocket server for Arbor</strong><br>
+  <em>Real-time graph queries for IDEs and visualizers</em>
+</p>
+
+<p align="center">
+  <a href="https://crates.io/crates/arbor-server"><img src="https://img.shields.io/crates/v/arbor-server?style=flat-square&color=blue" alt="Crates.io" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
+</p>
+
+---
+
+## Overview
+
+`arbor-server` exposes the [Arbor](https://github.com/Anandb71/arbor) graph over WebSocket, enabling:
+
+- **VS Code Extension**: Live code highlighting
+- **Logic Forest Visualizer**: Real-time graph rendering
+- **Custom Clients**: Any tool that speaks JSON-RPC
 
 ## Protocol
 
-The server runs on `ws://localhost:7432` by default.
+**Default**: `ws://localhost:7432`
 
-Supported methods:
+| Method | Description |
+|--------|-------------|
+| `discover` | Find architectural entry points |
+| `impact` | Calculate blast radius of changes |
+| `context` | Get ranked context for AI prompts |
+| `graph.subscribe` | Stream live graph updates |
+| `spotlight` | Highlight a node across clients |
 
-- `discover`: Find architectural roots
-- `impact`: Calculate blast radius of changes
-- `context`: Retrieve ranked context for AI
-- `graph.subscribe`: Subscribe to live graph updates
+## Message Format
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "context",
+  "params": { "node": "auth::validate", "depth": 2 },
+  "id": 1
+}
+```
 
 ## Usage
 
-This crate is typically run via the `arbor-cli`:
-
 ```bash
-arbor serve
+cargo install arbor-graph-cli
+arbor serve  # Starts on ws://localhost:7432
 ```
 
-## Documentation
+## Links
 
-For full documentation, see the [main repository](https://github.com/Anandb71/arbor).
+- **Main Repository**: [github.com/Anandb71/arbor](https://github.com/Anandb71/arbor)
+- **Protocol Docs**: [docs/PROTOCOL.md](https://github.com/Anandb71/arbor/blob/main/docs/PROTOCOL.md)

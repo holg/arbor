@@ -1,42 +1,67 @@
-# Arbor CLI
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Anandb71/arbor/main/docs/assets/arbor-logo.svg" alt="Arbor" width="80" height="80" />
+</p>
 
-The command-line interface for **Arbor**, the graph-native intelligence layer for code.
+<h1 align="center">arbor-graph-cli</h1>
 
-This tool indexes your codebase into a queryable graph and acts as the "nervous system" connecting your code, AI agents, and IDE.
+<p align="center">
+  <strong>The command-line interface for Arbor</strong><br>
+  <em>Index your code. Query the graph. Navigate with AI.</em>
+</p>
+
+<p align="center">
+  <a href="https://crates.io/crates/arbor-graph-cli"><img src="https://img.shields.io/crates/v/arbor-graph-cli?style=flat-square&color=blue" alt="Crates.io" /></a>
+  <a href="https://github.com/Anandb71/arbor"><img src="https://img.shields.io/badge/repo-arbor-green?style=flat-square" alt="Repo" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
+</p>
+
+---
+
+## What is Arbor?
+
+Arbor is the **graph-native intelligence layer for code**. It parses your codebase into an AST graph where every function, class, and variable is a node, and every call, import, and inheritance is an edge.
+
+This CLI is the primary interface for indexing, querying, and connecting your code to AI via the Model Context Protocol (MCP).
 
 ## Installation
 
 ```bash
-cargo install arbor-cli
+cargo install arbor-graph-cli
 ```
 
-## Usage
-
-Initialize a new project:
+## Quick Start
 
 ```bash
+# Initialize in your project
 cd your-project
 arbor init
-```
 
-Index the codebase:
-
-```bash
+# Index the codebase
 arbor index
-```
 
-Start the context server (MCP & WebSocket):
-
-```bash
-arbor serve
-```
-
-Run the Agentic Bridge with Visualizer:
-
-```bash
+# Start the AI bridge + visualizer
 arbor bridge --viz
 ```
 
-## Documentation
+## Commands
 
-For full documentation, see the [main repository](https://github.com/Anandb71/arbor).
+| Command | Description |
+|---------|-------------|
+| `arbor init` | Creates `.arbor/` config directory |
+| `arbor index` | Full index of the codebase |
+| `arbor query <q>` | Search the graph |
+| `arbor serve` | Start the WebSocket server |
+| `arbor bridge` | Start MCP server for AI integration |
+| `arbor bridge --viz` | MCP + Visualizer together |
+| `arbor viz` | Launch the Logic Forest visualizer |
+| `arbor check-health` | System diagnostics |
+
+## Supported Languages
+
+Rust, TypeScript, JavaScript, Python, Go, Java, C, C++, C#, Dart
+
+## Links
+
+- **Main Repository**: [github.com/Anandb71/arbor](https://github.com/Anandb71/arbor)
+- **Documentation**: [docs/](https://github.com/Anandb71/arbor/tree/main/docs)
+- **MCP Registry**: `io.github.Anandb71/arbor`
