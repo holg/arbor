@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased] - v1.1.0 "The Sentinel Update"
+
+### Planned
+
+- **Impact Radius Simulator**: Predict affected nodes before making changes
+- **Dynamic Context Slicing**: Token-optimized code retrieval for LLMs
+- **Shadow Indexing**: Structural git diffs (AST-level comparisons)
+- **Technical Debt Heatmaps**: Cyclomatic complexity overlays in visualizer
+- **Arbor Relay**: Real-time collaborative graph sessions
+- **Docker Distribution**: `docker pull ghcr.io/anandb71/arbor`
+- **What-If Sandbox**: Simulate refactors without file changes
+- **LSP Integration**: IDE hover/codelens for graph context
+- **Cross-Platform Binaries**: macOS (Intel + Apple Silicon), Linux (x64 + ARM64) via GitHub Actions
+
+---
+
 All notable changes to Arbor will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

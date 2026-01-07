@@ -139,7 +139,7 @@ arbor/
 │   ├── arbor-watcher/      # File watching, incremental sync
 │   ├── arbor-server/       # WebSocket server, protocol handler
 │   ├── arbor-mcp/          # Model Context Protocol bridge
-│   └── arbor-cli/          # Command-line interface
+│   └── arbor-cli/          # Command-line interface (pkg: arbor-graph-cli)
 ├── visualizer/             # Flutter desktop app
 │   ├── lib/
 │   │   ├── core/           # Theme, state management

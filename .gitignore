@@ -67,3 +67,9 @@ extensions/*/node_modules/
 
 # Personal Release Guides
 v1_release_checklist.md
+
+# MCP Publisher (NEVER COMMIT)
+.mcpregistry_*
+mcp-publisher.exe
+server.json
+.servers-fork/
