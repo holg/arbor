@@ -33,6 +33,7 @@ mod graph;
 mod impact;
 mod query;
 mod ranking;
+mod slice;
 
 pub mod store;
 pub mod symbol_table;
@@ -43,5 +44,6 @@ pub use graph::{ArborGraph, NodeId};
 pub use impact::{AffectedNode, ImpactAnalysis, ImpactDirection, ImpactSeverity};
 pub use query::{DependentInfo, ImpactResult, NodeInfo, QueryResult};
 pub use ranking::{compute_centrality, CentralityScores};
+pub use slice::{ContextNode, ContextSlice, TruncationReason};
 pub use store::{GraphStore, StoreError};
 pub use symbol_table::SymbolTable;
