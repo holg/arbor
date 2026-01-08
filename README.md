@@ -155,7 +155,9 @@ arbor/
 └── docs/                   # Extended documentation
 ```
 
-## Roadmap (v1.0.0 Completed)
+## Roadmap
+
+### v1.0.0 (Completed)
 
 - [x] **Phase 1**: Core indexer and CLI
 - [x] **Phase 2**: Logic Forest visualizer (LOD, Bloom)
@@ -247,6 +249,8 @@ Arbor v1.0.0 represents the complete "Nervous System" for your code:
 | `arbor bridge` | Start MCP server for AI integration |
 | `arbor bridge --viz` | MCP + Visualizer together |
 | `arbor check-health` | System diagnostics and health check |
+| ⭐ `arbor refactor` | Safe refactor with blast radius preview (v1.1.0) |
+| ⭐ `arbor explain` | Graph-backed code explanation (v1.1.0) |
 
 ## License
 
