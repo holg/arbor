@@ -189,14 +189,14 @@ pub async fn viz(path: &Path) -> Result<()> {
     );
 
     // 2. Start API Server (JSON-RPC)
-    let rpc_port = 7432;
+    let rpc_port = 7433;
     let rpc_addr = format!("127.0.0.1:{}", rpc_port).parse()?;
     let rpc_config = ServerConfig { addr: rpc_addr };
     let arbor_server = ArborServer::new(graph, rpc_config);
     let shared_graph = arbor_server.graph();
 
     // 3. Start Sync Server (WebSocket Broadcast)
-    let sync_port = 8080;
+    let sync_port = 8081;
     let sync_addr = format!("127.0.0.1:{}", sync_port).parse()?;
     let sync_config = arbor_server::SyncServerConfig {
         addr: sync_addr,
