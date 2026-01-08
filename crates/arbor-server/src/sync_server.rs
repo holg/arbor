@@ -60,12 +60,45 @@ impl Default for SyncServerConfig {
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type", content = "payload")]
 pub enum BroadcastMessage {
-    /// Full graph snapshot or delta update.
+    /// Initial handshake with server info
+    Hello(HelloPayload),
+    /// Start of a graph stream
+    GraphBegin(GraphBeginPayload),
+    /// Batch of nodes
+    NodeBatch(NodeBatchPayload),
+    /// Batch of edges
+    EdgeBatch(EdgeBatchPayload),
+    /// End of graph stream
+    GraphEnd,
+    /// Full graph snapshot or delta update (Legacy/Incremental)
     GraphUpdate(GraphUpdatePayload),
     /// Tell the visualizer to focus on a specific node.
     FocusNode(FocusNodePayload),
     /// Indexer progress status.
     IndexerStatus(IndexerStatusPayload),
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct HelloPayload {
+    pub version: String,
+    pub node_count: usize,
+    pub edge_count: usize,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct GraphBeginPayload {
+    pub total_nodes: usize,
+    pub total_edges: usize,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct NodeBatchPayload {
+    pub nodes: Vec<arbor_core::CodeNode>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct EdgeBatchPayload {
+    pub edges: Vec<arbor_graph::GraphEdge>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -313,32 +346,111 @@ async fn handle_client(
     graph: SharedGraph,
     mut broadcast_rx: broadcast::Receiver<BroadcastMessage>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let ws_stream = accept_async(stream).await?;
+    use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
+
+    let config = WebSocketConfig {
+        max_send_queue: None,
+        max_message_size: Some(64 * 1024 * 1024), // 64 MB
+        max_frame_size: Some(64 * 1024 * 1024),   // 64 MB
+        accept_unmasked_frames: false,
+        ..Default::default()
+    };
+
+    let ws_stream = tokio_tungstenite::accept_async_with_config(stream, Some(config)).await?;
     let (mut write, mut read) = ws_stream.split();
 
     info!("✅ WebSocket handshake complete with {}", addr);
 
-    // Send initial graph snapshot
-    {
+    // 1. Send Hello (Metadata)
+    let (node_count, edge_count, nodes, edges) = {
         let g = graph.read().await;
-        let snapshot = BroadcastMessage::GraphUpdate(GraphUpdatePayload {
-            is_delta: false,
-            node_count: g.node_count(),
-            edge_count: g.edge_count(),
-            file_count: g.stats().files,
-            changed_files: vec![],
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-            nodes: Some(g.nodes().cloned().collect()),
-            edges: Some(g.export_edges()),
-        });
+        (
+            g.node_count(),
+            g.edge_count(),
+            g.nodes().cloned().collect::<Vec<_>>(),
+            g.export_edges(),
+        )
+    };
 
-        let json = serde_json::to_string(&snapshot)?;
-        write.send(Message::Text(json)).await?;
-        debug!("📤 Sent initial snapshot to {}", addr);
+    let hello = BroadcastMessage::Hello(HelloPayload {
+        version: "1.1.1".to_string(),
+        node_count,
+        edge_count,
+    });
+
+    let json = serde_json::to_string(&hello)?;
+    write.send(Message::Text(json)).await?;
+    info!(
+        "👋 Sent Hello ({} nodes, {} edges) to {}",
+        node_count, edge_count, addr
+    );
+
+    // 2. Wait for Client Ready
+    info!("⏳ Waiting for client {} to be ready...", addr);
+    let mut ready = false;
+    while let Some(msg) = read.next().await {
+        match msg {
+            Ok(Message::Text(text)) => {
+                // Simple parsing for "ready_for_graph"
+                if text.contains("ready_for_graph") {
+                    ready = true;
+                    info!("✅ Client {} is ready for graph", addr);
+                    break;
+                }
+                debug!("Running pre-ready protocol with {}: {}", addr, text);
+            }
+            Ok(Message::Ping(data)) => {
+                write.send(Message::Pong(data)).await?;
+            }
+            Ok(Message::Close(_)) => return Ok(()),
+            Err(e) => return Err(e.into()),
+            _ => {}
+        }
     }
+
+    if !ready {
+        warn!("Client {} disconnected before sending ready signal", addr);
+        return Ok(());
+    }
+
+    // 3. Stream Graph (Chunked)
+    let begin = BroadcastMessage::GraphBegin(GraphBeginPayload {
+        total_nodes: node_count,
+        total_edges: edge_count,
+    });
+    write
+        .send(Message::Text(serde_json::to_string(&begin)?))
+        .await?;
+
+    // Stream Nodes
+    for chunk in nodes.chunks(50) {
+        let batch = BroadcastMessage::NodeBatch(NodeBatchPayload {
+            nodes: chunk.to_vec(),
+        });
+        write
+            .send(Message::Text(serde_json::to_string(&batch)?))
+            .await?;
+    }
+    info!("📤 Streamed {} nodes to {}", node_count, addr);
+
+    // Stream Edges
+    for chunk in edges.chunks(100) {
+        let batch = BroadcastMessage::EdgeBatch(EdgeBatchPayload {
+            edges: chunk.to_vec(),
+        });
+        write
+            .send(Message::Text(serde_json::to_string(&batch)?))
+            .await?;
+    }
+    info!("📤 Streamed {} edges to {}", edge_count, addr);
+
+    // End Stream
+    write
+        .send(Message::Text(serde_json::to_string(
+            &BroadcastMessage::GraphEnd,
+        )?))
+        .await?;
+    info!("🏁 Graph stream complete for {}", addr);
 
     // Two-way message handling
     loop {

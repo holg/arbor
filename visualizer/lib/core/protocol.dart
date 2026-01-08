@@ -11,6 +11,16 @@ sealed class BroadcastMessage {
     final payload = json['payload'] as Map<String, dynamic>;
 
     switch (type) {
+      case 'Hello':
+        return Hello(payload);
+      case 'GraphBegin':
+        return GraphBegin(payload);
+      case 'NodeBatch':
+        return NodeBatch(payload);
+      case 'EdgeBatch':
+        return EdgeBatch(payload);
+      case 'GraphEnd':
+        return GraphEnd();
       case 'GraphUpdate':
         return GraphUpdate(payload);
       case 'FocusNode':
@@ -21,6 +31,52 @@ sealed class BroadcastMessage {
         throw Exception('Unknown message type: $type');
     }
   }
+}
+
+class Hello extends BroadcastMessage {
+  final String version;
+  final int nodeCount;
+  final int edgeCount;
+
+  Hello(Map<String, dynamic> json)
+      : version = json['version'] as String,
+        nodeCount = json['node_count'] as int,
+        edgeCount = json['edge_count'] as int,
+        super('Hello');
+}
+
+class GraphBegin extends BroadcastMessage {
+  final int totalNodes;
+  final int totalEdges;
+
+  GraphBegin(Map<String, dynamic> json)
+      : totalNodes = json['total_nodes'] as int,
+        totalEdges = json['total_edges'] as int,
+        super('GraphBegin');
+}
+
+class NodeBatch extends BroadcastMessage {
+  final List<GraphNode> nodes;
+
+  NodeBatch(Map<String, dynamic> json)
+      : nodes = (json['nodes'] as List)
+            .map((e) => GraphNode.fromJson(e))
+            .toList(),
+        super('NodeBatch');
+}
+
+class EdgeBatch extends BroadcastMessage {
+  final List<GraphEdge> edges;
+
+  EdgeBatch(Map<String, dynamic> json)
+      : edges = (json['edges'] as List)
+            .map((e) => GraphEdge.fromJson(e))
+            .toList(),
+        super('EdgeBatch');
+}
+
+class GraphEnd extends BroadcastMessage {
+  GraphEnd() : super('GraphEnd');
 }
 
 class GraphUpdate extends BroadcastMessage {

@@ -65,21 +65,102 @@ class WebSocketService {
     await Future.delayed(Duration(seconds: delay));
   }
 
+  // Buffer for batch loading
+  final List<GraphNode> _pendingNodes = [];
+  final List<GraphEdge> _pendingEdges = [];
+
   void _handleMessage(dynamic message) {
     try {
       if (message is String) {
         final json = jsonDecode(message);
         // Check if it matches BroadcastMessage structure
-        if (json is Map<String, dynamic> && json.containsKey('type') && json.containsKey('payload')) {
+        if (json is Map<String, dynamic> && json.containsKey('type')) {
+           final type = json['type'];
+
+           // 1. Handshake
+           if (type == 'Hello') {
+             final hello = Hello(json['payload']);
+             debugPrint('👋 Handshake from server: v${hello.version}, expecting ${hello.nodeCount} nodes');
+             // Send Ready
+             _send({'type': 'ready_for_graph'});
+             return;
+           }
+
+           // 2. Stream Control
+           if (type == 'GraphBegin') {
+             _pendingNodes.clear();
+             _pendingEdges.clear();
+             debugPrint('📥 Starting graph stream...');
+             return;
+           }
+
+           if (type == 'GraphEnd') {
+             debugPrint('🏁 Graph stream complete. Emitting update with ${_pendingNodes.length} nodes.');
+             final update = GraphUpdate({
+               'is_delta': false,
+               'node_count': _pendingNodes.length,
+               'edge_count': _pendingEdges.length,
+               'file_count': 0, // Not vital for viz
+               'changed_files': [],
+               'timestamp': DateTime.now().millisecondsSinceEpoch,
+               // We need to re-serialize to match the GraphUpdate constructor expectation
+               // Or we can manually construct it if we change the constructor. 
+               // For now, let's just make the list available.
+               // Wait, GraphUpdate expects Map<String, dynamic> in constructor? 
+               // Yes. Let's construct the object directly or change the constructor.
+               // Actually, let's look at protocol.dart again. GraphUpdate takes a Map.
+               // I can't pass List<GraphNode> directly to constructor unless I change it.
+               // Hack: Serialize back to JSON or modify protocol.dart? 
+               // Modify protocol.dart is cleaner but I just finished it.
+               // I will manually instantiate GraphUpdate if I can... 
+               // Wait, Dart doesn't have public fields constructor if it takes Map.
+               // I will pass nulls to map and set fields? No fields are final.
+               // Okay, I will construct a Map for the GraphUpdate constructor.
+               'nodes': _pendingNodes.map((n) => {
+                 'id': n.id,
+                 'name': n.name,
+                 'kind': n.kind,
+                 'file': n.file,
+                 'start_line': n.lineStart,
+                 'end_line': n.lineEnd,
+                 'centrality': n.centrality,
+               }).toList(),
+               'edges': _pendingEdges.map((e) => {
+                 'source': e.source,
+                 'target': e.target,
+                 'kind': e.kind,
+               }).toList(),
+             });
+             _controller.add(update);
+             return;
+           }
+
+           // 3. Batches
+           if (type == 'NodeBatch') {
+             final batch = NodeBatch(json['payload']);
+             _pendingNodes.addAll(batch.nodes);
+             return;
+           }
+
+           if (type == 'EdgeBatch') {
+             final batch = EdgeBatch(json['payload']);
+             _pendingEdges.addAll(batch.edges);
+             return;
+           }
+
+           // 4. Legacy / Other
            final broadcast = BroadcastMessage.fromJson(json);
            _controller.add(broadcast);
-        } else {
-           // Might be a standard JSON-RPC response, ignore for now or log
-           // debugPrint('Ignored message: $message');
         }
       }
-    } catch (e) {
-      debugPrint('Error parsing message: $e');
+    } catch (e, stack) {
+      debugPrint('Error parsing message: $e\n$stack');
+    }
+  }
+
+  void _send(Map<String, dynamic> data) {
+    if (_channel != null && _channel!.closeCode == null) {
+      _channel!.sink.add(jsonEncode(data));
     }
   }
 
