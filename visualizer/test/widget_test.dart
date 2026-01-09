@@ -132,7 +132,7 @@ void main() {
         'centrality': 0.75,
       };
 
-      final node = GraphNode.fromJson(json);
+      final node = protocol.GraphNode.fromJson(json);
 
       expect(node.id, 'node-123');
       expect(node.name, 'parseData');
@@ -153,7 +153,7 @@ void main() {
         'file': 'simple.rs',
       };
 
-      final node = GraphNode.fromJson(json);
+      final node = protocol.GraphNode.fromJson(json);
 
       expect(node.id, 'node-456');
       expect(node.name, 'simpleFunc');
@@ -183,7 +183,7 @@ void main() {
         'kind': 'imports',
       };
 
-      final edge = GraphEdge.fromJson(json);
+      final edge = protocol.GraphEdge.fromJson(json);
 
       expect(edge.source, 'func-a');
       expect(edge.target, 'func-b');
@@ -196,7 +196,7 @@ void main() {
         'target': 'func-b',
       };
 
-      final edge = GraphEdge.fromJson(json);
+      final edge = protocol.GraphEdge.fromJson(json);
 
       expect(edge.kind, 'calls');
     });

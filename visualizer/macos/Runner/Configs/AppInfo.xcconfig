@@ -8,7 +8,7 @@
 PRODUCT_NAME = arbor_visualizer
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.arborVisualizer
+PRODUCT_BUNDLE_IDENTIFIER = io.github.anandb71.arbor.visualizer
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Arbor Contributors. All rights reserved.
