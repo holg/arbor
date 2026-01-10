@@ -10,6 +10,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod commands;
 
+#[cfg(feature = "gui")]
+mod gui;
+
 #[derive(Parser)]
 #[command(name = "arbor")]
 #[command(author = "Arbor Contributors")]
@@ -144,6 +147,14 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
+
+    /// Launch the Arbor GUI (requires 'gui' feature)
+    #[cfg(feature = "gui")]
+    Gui {
+        /// Initial workspace path to open
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -187,6 +198,21 @@ async fn main() {
             why,
             json,
         } => commands::explain(&question, tokens, why, json),
+        #[cfg(feature = "gui")]
+        Commands::Gui { path } => {
+            // GUI runs its own event loop, so we handle errors differently
+            // Only index if user explicitly provides a path (not default ".")
+            let initial_path = if path.as_os_str() != "." {
+                Some(path)
+            } else {
+                None
+            };
+            if let Err(e) = gui::run_gui(initial_path) {
+                eprintln!("{} {}", "error:".red().bold(), e);
+                std::process::exit(1);
+            }
+            return;
+        }
     };
 
     if let Err(e) = result {

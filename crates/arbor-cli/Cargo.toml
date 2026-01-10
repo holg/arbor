@@ -9,6 +9,10 @@ description = "Command-line interface for Arbor"
 name = "arbor"
 path = "src/main.rs"
 
+[features]
+default = []
+gui = ["eframe", "egui", "rfd"]
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
@@ -27,3 +31,8 @@ colored = "2.0"
 indicatif = "0.17"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dirs = "5.0"
+
+# Optional GUI dependencies
+eframe = { version = "0.31", optional = true, default-features = false, features = ["default_fonts", "glow"] }
+egui = { version = "0.31", optional = true }
+rfd = { version = "0.15", optional = true }
