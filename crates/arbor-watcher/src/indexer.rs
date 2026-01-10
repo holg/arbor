@@ -159,10 +159,7 @@ mod tests {
 
     /// Helper to create a directory symlink cross-platform.
     /// Returns None if symlink creation fails (e.g., no privileges on Windows).
-    fn create_dir_symlink(
-        original: &std::path::Path,
-        link: &std::path::Path,
-    ) -> Option<()> {
+    fn create_dir_symlink(original: &std::path::Path, link: &std::path::Path) -> Option<()> {
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink(original, link).ok()
