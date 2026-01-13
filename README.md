@@ -30,17 +30,48 @@
 
 ---
 
-> **If you've ever asked an AI to refactor code and it confidently broke half your system, Arbor is why that keeps happening — and how to fix it.**
+> **About to change code but afraid of breaking things?**
+
+```bash
+$ arbor refactor parse_file
+
+🔍 Analyzing parse_file
+
+This node sits in the middle of the graph.
+  15 callers, 3 dependencies.
+
+⚠️  18 nodes affected (4 direct, 14 transitive)
+
+Will break immediately:
+  • detect_language (function)
+  • parse_single_file (function)
+  • index_directory (function)
+
+→ Proceed carefully. Test affected callers.
+```
+
+That's it. One command. Know what breaks before you break it.
+
+## Quick Start
+
+```bash
+# Install
+cargo install arbor
+
+# Run on any project
+cd your-project
+arbor refactor <function-name>
+```
+
+> 📖 **More commands?** See the [5-minute Quickstart Guide](docs/QUICKSTART.md)
+
+---
 
 ## Why Arbor?
 
-**Arbor is designed to replace embedding-based RAG for code.**
+Most AI coding assistants treat your codebase like a bag of text. They embed chunks into vectors and hope similarity search finds the right context.
 
-Most AI coding assistants treat your codebase like a bag of text. They embed chunks into vectors and hope similarity search finds the right context. The result? Hallucinated connections, missing dependencies, and refactors that break everything downstream.
-
-**Arbor is the ground truth layer between code and AI.**
-
-We parse your code into an AST using [Tree-sitter](https://tree-sitter.github.io/), then build a living graph where every function, class, and variable is a **node**, and every import, call, and implementation is an **edge**. When an AI asks "where is authentication handled?", Arbor traces the call graph to find the actual service — not 47 keyword matches.
+**Arbor builds a graph.** Every function, class, and import is a node. Every call and dependency is an edge. When you ask "what breaks if I change this?", Arbor traces the actual call graph — not keyword matches.
 
 ```text
 Traditional RAG:         Arbor:
@@ -51,23 +82,7 @@ Traditional RAG:         Arbor:
                                   └── emits → AuthEvent
 ```
 
-## Quick Start
-
-> 📖 **New to Arbor?** See the [5-minute Quickstart Guide](docs/QUICKSTART.md)
-
-### Option 1: Download Pre-built Binary (Recommended)
-
-Download `arbor-windows-v1.0.0.zip` from the [Releases](https://github.com/Anandb71/arbor/releases) page.
-
-```bash
-# Unzip and add to PATH, then:
-cd your-project
-arbor init
-arbor index
-arbor bridge --viz   # Starts server + opens visualizer
-```
-
-### Option 2: Build from Source
+## Build from Source
 
 ```bash
 # Clone and build
