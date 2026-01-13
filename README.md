@@ -2,7 +2,7 @@
   <img src="docs/assets/arbor-logo.svg" alt="Arbor" width="120" height="120" />
 </p>
 
-<h1 align="center">Arbor v1.0.0</h1>
+<h1 align="center">Arbor v1.3.0</h1>
 
 <p align="center">
   <strong>The Graph-Native Intelligence Layer for Code</strong><br>
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://github.com/Anandb71/arbor/actions"><img src="https://img.shields.io/github/actions/workflow/status/Anandb71/arbor/rust.yml?style=flat-square&label=CI" alt="CI" /></a>
-  <img src="https://img.shields.io/badge/release-v1.0.0-blue?style=flat-square" alt="Release" />
+  <img src="https://img.shields.io/badge/release-v1.3.0-blue?style=flat-square" alt="Release" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
   <img src="https://img.shields.io/badge/rust-1.70+-orange?style=flat-square" alt="Rust" />
   <img src="https://img.shields.io/badge/flutter-3.0+-blue?style=flat-square" alt="Flutter" />
@@ -214,6 +214,15 @@ Direct (1 hop):
   • TokenMiddleware (Class) — Calls validate
   • AuthController (Class) — Calls validate
 ```
+
+### v1.3.0 "The Cache Update" ✅
+
+> **Faster indexing. Smarter resolution. Better docs.**
+
+- [x] **Context-Aware Edge Resolution**: FQN-based symbol lookup with locality preference
+- [x] **Persistent Caching**: Mtime-based incremental indexing with Sled
+- [x] **`--no-cache` Flag**: Force full re-index when needed
+- [x] **Quickstart Guide**: 5-minute getting started documentation
 
 📖 **Full roadmap**: [docs/ROADMAP.md](docs/ROADMAP.md)
 
