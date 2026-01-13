@@ -24,7 +24,7 @@
 
 Responding to: *"I rely on tests / types / compiler."*
 
-- [ ] **Confidence Score**: Soft, explainable risk rating (Low/Medium/High).
+- [ ] **Confidence Signal**: Explainable risk level (Low/Medium/High), derived from visible factors.
 - [ ] **Explainer**: "This looks safe structurally. Tests still recommended for behavior."
 - [ ] **Better Role Detection**: Explicitly identify Core Domain vs Adapters vs Utilities.
 
@@ -32,7 +32,7 @@ Responding to: *"I rely on tests / types / compiler."*
 
 ---
 
-## Phase 2: Reality Handling (v1.5)
+## Phase 2: Reality Tolerance (v1.5)
 **Theme:** "Real code isn't perfect."
 
 - [ ] **Dynamic Edge Awareness**: Best-effort heuristics for callbacks, framework hooks (e.g., Flutter widgets).
@@ -81,6 +81,7 @@ v2.0 isn't about more features. It's a promise: **"If Arbor says this is safe, y
 
 ## What is NOT on the Roadmap (Yet)
 *To keep focus, these stay out until after v2:*
+> These are intentionally excluded to keep Arbor focused on confidence, not complexity.
 - Fancy visualizer overhauls
 - LSP parity with IDEs
 - AI automated refactoring
