@@ -658,27 +658,19 @@ pub fn refactor(target: &str, max_depth: usize, show_why: bool, json_output: boo
     let node_idx = match node_idx {
         Some(idx) => idx,
         None => {
-            return Err(format!("Node '{}' not found in graph", target).into());
+            // Smart fallback: suggest similar symbols
+            return suggest_similar_symbols(&graph, target);
         }
     };
+
+    // Get the target node info
+    let target_node = graph.get(node_idx).unwrap();
 
     // Run impact analysis
     let analysis = graph.analyze_impact(node_idx, max_depth);
 
-    // Warn if no affected nodes found
-    if analysis.total_affected == 0 {
-        eprintln!("\n{} No affected nodes found.", "⚠ Warning:".yellow());
-        eprintln!("Possible causes:");
-        eprintln!(
-            "  - Node '{}' has no dependents (nothing calls/imports it)",
-            target
-        );
-        eprintln!("  - Try increasing --depth (current: {})", max_depth);
-        eprintln!("  - Edges may be missing if source files weren't fully parsed");
-    }
-
     if json_output {
-        // JSON output
+        // JSON output (keep existing behavior for automation)
         let output = serde_json::json!({
             "target": {
                 "id": analysis.target.id,
@@ -704,87 +696,235 @@ pub fn refactor(target: &str, max_depth: usize, show_why: bool, json_output: boo
             "query_time_ms": analysis.query_time_ms
         });
         println!("{}", serde_json::to_string_pretty(&output)?);
-    } else {
-        // Human-readable output
-        println!("{}", "⚠️  Blast Radius".yellow().bold());
-        println!(
-            "Target: {} ({})",
-            analysis.target.name.cyan(),
-            analysis.target.kind
-        );
-        println!();
+        return Ok(());
+    }
 
-        // Count by severity
-        let direct: Vec<_> = analysis
-            .all_affected()
-            .into_iter()
-            .filter(|n| n.severity == arbor_graph::ImpactSeverity::Direct)
-            .collect();
-        let transitive: Vec<_> = analysis
-            .all_affected()
-            .into_iter()
-            .filter(|n| n.severity == arbor_graph::ImpactSeverity::Transitive)
-            .collect();
-        let distant: Vec<_> = analysis
-            .all_affected()
-            .into_iter()
-            .filter(|n| n.severity == arbor_graph::ImpactSeverity::Distant)
-            .collect();
+    // === WARM, OPINIONATED OUTPUT ===
+    println!();
+    println!(
+        "{} {}",
+        "🔍 Analyzing".cyan().bold(),
+        target_node.name.cyan().bold()
+    );
+    println!();
 
-        println!(
-            "Total: {} nodes (direct: {}, transitive: {}, distant: {})",
-            analysis.total_affected.to_string().bold(),
-            direct.len().to_string().red(),
-            transitive.len().to_string().yellow(),
-            distant.len().to_string().dimmed()
-        );
-        println!();
+    // Determine the node's role
+    let has_upstream = !analysis.upstream.is_empty();
+    let has_downstream = !analysis.downstream.is_empty();
 
-        if !direct.is_empty() {
-            println!("{}", "Direct (1 hop):".red());
-            for node in direct.iter().take(10) {
-                print!("  • {} ({})", node.node_info.name, node.node_info.kind);
-                if show_why {
-                    print!(
-                        " — {} {}",
-                        node.entry_edge.to_string().dimmed(),
-                        analysis.target.name
-                    );
+    match (has_upstream, has_downstream) {
+        (false, false) => {
+            // Isolated node
+            println!("{}", "This node appears isolated.".yellow());
+            println!("  • No callers found in the codebase");
+            println!("  • No dependencies detected");
+            println!();
+            println!("{}", "Possible reasons:".dimmed());
+            println!("  • It's an entry point called externally (CLI, HTTP, tests)");
+            println!("  • It's dynamically invoked (reflection, callbacks)");
+            println!("  • It may be dead code");
+            println!();
+            println!("{} Safe to change, but verify external usage.", "→".green());
+        }
+        (false, true) => {
+            // Entry point (no callers, but calls others)
+            println!("{}", "This is an entry point.".green());
+            println!("  Nothing in your codebase calls it directly.");
+            println!();
+            println!("{}", "However, changing it may affect:".yellow());
+            for node in analysis.downstream.iter().take(5) {
+                println!(
+                    "  └─ {} ({})",
+                    node.node_info.name.cyan(),
+                    node.entry_edge.to_string().dimmed()
+                );
+            }
+            if analysis.downstream.len() > 5 {
+                println!("  └─ ... and {} more", analysis.downstream.len() - 5);
+            }
+            println!();
+            println!(
+                "{} Low risk upstream, {} downstream dependencies.",
+                "→".green(),
+                analysis.downstream.len().to_string().yellow()
+            );
+        }
+        (true, false) => {
+            // Leaf/utility node (has callers, but doesn't call anything)
+            println!("{}", "This is a utility function.".cyan());
+            println!("  Called by others, but doesn't depend on much.");
+            println!();
+            println!("{}", "Called by:".yellow());
+            for node in analysis.upstream.iter().take(5) {
+                println!(
+                    "  • {} ({} hop{})",
+                    node.node_info.name.cyan(),
+                    node.hop_distance,
+                    if node.hop_distance == 1 { "" } else { "s" }
+                );
+            }
+            if analysis.upstream.len() > 5 {
+                println!("  • ... and {} more", analysis.upstream.len() - 5);
+            }
+            println!();
+            println!(
+                "{} Changes here ripple up to {} caller{}.",
+                "→".yellow(),
+                analysis.upstream.len(),
+                if analysis.upstream.len() == 1 {
+                    ""
+                } else {
+                    "s"
+                }
+            );
+        }
+        (true, true) => {
+            // Connected node (has both callers and dependencies)
+            println!("{}", "This node sits in the middle of the graph.".cyan());
+            println!(
+                "  {} caller{}, {} dependenc{}.",
+                analysis.upstream.len(),
+                if analysis.upstream.len() == 1 {
+                    ""
+                } else {
+                    "s"
+                },
+                analysis.downstream.len(),
+                if analysis.downstream.len() == 1 {
+                    "y"
+                } else {
+                    "ies"
+                }
+            );
+            println!();
+
+            // Count by severity
+            let direct: Vec<_> = analysis
+                .all_affected()
+                .into_iter()
+                .filter(|n| n.severity == arbor_graph::ImpactSeverity::Direct)
+                .collect();
+            let transitive: Vec<_> = analysis
+                .all_affected()
+                .into_iter()
+                .filter(|n| n.severity == arbor_graph::ImpactSeverity::Transitive)
+                .collect();
+
+            println!(
+                "{} {} nodes affected ({}  direct, {} transitive)",
+                "⚠️ ".yellow(),
+                analysis.total_affected.to_string().bold(),
+                direct.len().to_string().red(),
+                transitive.len().to_string().yellow()
+            );
+            println!();
+
+            if !direct.is_empty() {
+                println!("{}", "Will break immediately:".red());
+                for node in direct.iter().take(5) {
+                    print!("  • {} ({})", node.node_info.name, node.node_info.kind);
+                    if show_why {
+                        print!(
+                            " — {} {}",
+                            node.entry_edge.to_string().dimmed(),
+                            target_node.name
+                        );
+                    }
+                    println!();
+                }
+                if direct.len() > 5 {
+                    println!("  • ... and {} more", direct.len() - 5);
                 }
                 println!();
             }
-            if direct.len() > 10 {
-                println!("  ... and {} more", direct.len() - 10);
-            }
-            println!();
-        }
 
-        if !transitive.is_empty() {
-            println!("{}", "Transitive (2-3 hops):".yellow());
-            for node in transitive.iter().take(5) {
-                print!("  • {}", node.node_info.name);
-                if show_why {
-                    print!(
-                        " — {} hops via {}",
-                        node.hop_distance,
-                        node.entry_edge.to_string().dimmed()
+            if !transitive.is_empty() && show_why {
+                println!("{}", "May break indirectly:".yellow());
+                for node in transitive.iter().take(3) {
+                    println!(
+                        "  • {} ({} hops away)",
+                        node.node_info.name, node.hop_distance
                     );
+                }
+                if transitive.len() > 3 {
+                    println!("  • ... and {} more", transitive.len() - 3);
                 }
                 println!();
             }
-            if transitive.len() > 5 {
-                println!("  ... and {} more", transitive.len() - 5);
-            }
-            println!();
-        }
 
-        if !distant.is_empty() {
-            println!("{}", "Distant (4+ hops):".dimmed());
-            println!("  {} nodes at depth 4+", distant.len());
+            println!("{} Proceed carefully. Test affected callers.", "→".red());
         }
+    }
 
+    println!();
+    println!("{}", format!("File: {}", target_node.file).dimmed());
+
+    Ok(())
+}
+
+/// Suggest similar symbols when exact match fails
+fn suggest_similar_symbols(graph: &arbor_graph::ArborGraph, target: &str) -> Result<()> {
+    println!();
+    println!("{} Couldn't find \"{}\"", "🔍".yellow(), target.cyan());
+    println!();
+
+    // Find symbols that contain the target or end with it
+    let target_lower = target.to_lowercase();
+    let mut suggestions: Vec<(&arbor_core::CodeNode, usize)> = Vec::new();
+
+    for node in graph.nodes() {
+        let name_lower = node.name.to_lowercase();
+        let id_lower = node.id.to_lowercase();
+
+        // Match by suffix, contains, or starts with
+        if name_lower == target_lower
+            || id_lower.ends_with(&format!("::{}", target_lower))
+            || id_lower.ends_with(&format!(".{}", target_lower))
+            || name_lower.contains(&target_lower)
+        {
+            // Count callers for this node
+            let caller_count = if let Some(idx) = graph.get_index(&node.id) {
+                graph.analyze_impact(idx, 1).upstream.len()
+            } else {
+                0
+            };
+            suggestions.push((node, caller_count));
+        }
+    }
+
+    // Sort by caller count (most callers first)
+    suggestions.sort_by(|a, b| b.1.cmp(&a.1));
+
+    if suggestions.is_empty() {
+        println!("No similar symbols found in the codebase.");
         println!();
-        println!("Query time: {}ms", analysis.query_time_ms);
+        println!("{}", "Tips:".dimmed());
+        println!("  • Check spelling");
+        println!("  • Use the full qualified name (e.g., module::function)");
+        println!("  • Run `arbor query <name>` to search");
+        return Ok(());
+    }
+
+    println!("{}", "Did you mean:".green());
+    for (i, (node, caller_count)) in suggestions.iter().take(3).enumerate() {
+        let suffix = if *caller_count == 0 {
+            "entry point".dimmed().to_string()
+        } else {
+            format!(
+                "{} caller{}",
+                caller_count,
+                if *caller_count == 1 { "" } else { "s" }
+            )
+        };
+        println!("  {}) {} — {}", i + 1, node.id.cyan(), suffix);
+    }
+
+    if !suggestions.is_empty() {
+        println!();
+        println!(
+            "Run: {}",
+            format!("arbor refactor {}", suggestions[0].0.id).green()
+        );
     }
 
     Ok(())
