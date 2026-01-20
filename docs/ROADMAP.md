@@ -103,7 +103,7 @@
 - [x] Caching stable for large repos
 - [x] No empty or useless outputs
 - [ ] Zero confusion around installation or crate name
-- [ ] Polished documentation
+- [x] Polished documentation
 
 **Outcome:** Arbor reaches **trusted tool status**.  
 Not a toy. Not an experiment. Something developers depend on.

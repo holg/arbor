@@ -1,6 +1,6 @@
 [package]
 name = "arbor-gui"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Arbor GUI - Impact-first code analysis interface"
 
