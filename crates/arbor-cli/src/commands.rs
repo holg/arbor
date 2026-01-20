@@ -708,6 +708,32 @@ pub fn refactor(target: &str, max_depth: usize, show_why: bool, json_output: boo
     );
     println!();
 
+    // Compute and display confidence
+    let confidence = arbor_graph::ConfidenceExplanation::from_analysis(&analysis);
+    let role = arbor_graph::NodeRole::from_analysis(&analysis);
+
+    let confidence_color = match confidence.level {
+        arbor_graph::ConfidenceLevel::High => "green",
+        arbor_graph::ConfidenceLevel::Medium => "yellow",
+        arbor_graph::ConfidenceLevel::Low => "red",
+    };
+
+    println!(
+        "{}  {} | {}",
+        match confidence.level {
+            arbor_graph::ConfidenceLevel::High => "🟢",
+            arbor_graph::ConfidenceLevel::Medium => "🟡",
+            arbor_graph::ConfidenceLevel::Low => "🔴",
+        },
+        format!("Confidence: {}", confidence.level).color(confidence_color),
+        format!("Role: {}", role).dimmed()
+    );
+
+    for reason in &confidence.reasons {
+        println!("   • {}", reason.dimmed());
+    }
+    println!();
+
     // Determine the node's role
     let has_upstream = !analysis.upstream.is_empty();
     let has_downstream = !analysis.downstream.is_empty();

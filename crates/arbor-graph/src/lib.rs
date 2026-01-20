@@ -28,6 +28,7 @@
 //! ```
 
 mod builder;
+mod confidence;
 mod edge;
 mod graph;
 mod impact;
@@ -42,6 +43,7 @@ pub mod symbol_table;
 pub use search_index::SearchIndex;
 
 pub use builder::GraphBuilder;
+pub use confidence::{ConfidenceExplanation, ConfidenceLevel, NodeRole};
 pub use edge::{Edge, EdgeKind, GraphEdge};
 pub use graph::{ArborGraph, NodeId};
 pub use impact::{AffectedNode, ImpactAnalysis, ImpactDirection, ImpactSeverity};
