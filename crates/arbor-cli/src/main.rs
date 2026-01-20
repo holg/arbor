@@ -168,6 +168,13 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
+
+    /// Launch the graphical interface
+    Gui {
+        /// Path to analyze (defaults to current directory)
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -224,6 +231,7 @@ async fn main() {
             why,
             json,
         } => commands::explain(&question, tokens, why, json),
+        Commands::Gui { path } => commands::gui(&path),
     };
 
     if let Err(e) = result {

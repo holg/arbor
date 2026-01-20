@@ -1042,6 +1042,44 @@ pub fn explain(question: &str, max_tokens: usize, show_why: bool, json_output: b
     Ok(())
 }
 
+/// Launch the graphical interface.
+pub fn gui(path: &Path) -> Result<()> {
+    println!("{} Launching Arbor GUI...", "🌲".green());
+
+    // Set the working directory for the GUI
+    std::env::set_current_dir(path)?;
+
+    // Find the arbor-gui executable
+    let exe_dir = std::env::current_exe()?
+        .parent()
+        .unwrap()
+        .to_path_buf();
+
+    #[cfg(target_os = "windows")]
+    let gui_exe = exe_dir.join("arbor-gui.exe");
+    #[cfg(not(target_os = "windows"))]
+    let gui_exe = exe_dir.join("arbor-gui");
+
+    if gui_exe.exists() {
+        // Launch the GUI executable
+        std::process::Command::new(&gui_exe)
+            .spawn()
+            .map_err(|e| format!("Failed to launch GUI: {}", e))?;
+        println!("  GUI started. Analyzing: {}", path.display());
+    } else {
+        // Try cargo run as fallback for development
+        println!("  {} GUI executable not found at {:?}", "⚠".yellow(), gui_exe);
+        println!("  Running in development mode...");
+        std::process::Command::new("cargo")
+            .args(["run", "--package", "arbor-gui"])
+            .current_dir(path)
+            .spawn()
+            .map_err(|e| format!("Failed to launch GUI: {}", e))?;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
