@@ -1,3 +1,4 @@
+#![rustfmt::skip]
 //! Main application state and UI logic
 
 use arbor_graph::ArborGraph;
