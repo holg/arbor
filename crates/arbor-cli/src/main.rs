@@ -175,6 +175,23 @@ enum Commands {
         #[arg(default_value = ".")]
         path: PathBuf,
     },
+
+    /// Generate a PR summary for refactored symbols
+    PrSummary {
+        /// Symbols that were changed (comma-separated)
+        symbols: String,
+
+        /// Path to analyze (defaults to current directory)
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
+
+    /// Watch for file changes and re-index automatically
+    Watch {
+        /// Path to watch (defaults to current directory)
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -232,6 +249,8 @@ async fn main() {
             json,
         } => commands::explain(&question, tokens, why, json),
         Commands::Gui { path } => commands::gui(&path),
+        Commands::PrSummary { symbols, path } => commands::pr_summary(&symbols, &path),
+        Commands::Watch { path } => commands::watch(&path).await,
     };
 
     if let Err(e) = result {
