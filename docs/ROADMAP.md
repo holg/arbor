@@ -103,6 +103,7 @@
 - [x] Caching stable for large repos
 - [x] No empty or useless outputs
 - [ ] Zero confusion around installation or crate name
+- [x] Single blessed install path shown everywhere (README, Quickstart, CLI)
 - [x] Polished documentation
 
 **Outcome:** Arbor reaches **trusted tool status**.  
