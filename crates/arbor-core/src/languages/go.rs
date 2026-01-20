@@ -22,20 +22,14 @@ impl LanguageParser for GoParser {
         let mut nodes = Vec::new();
         let root = tree.root_node();
 
-        extract_from_node(&root, source, file_path, &mut nodes, None);
+        extract_from_node(&root, source, file_path, &mut nodes);
 
         nodes
     }
 }
 
 /// Recursively extracts nodes from the Go AST.
-fn extract_from_node(
-    node: &Node,
-    source: &str,
-    file_path: &str,
-    nodes: &mut Vec<CodeNode>,
-    context: Option<&str>,
-) {
+fn extract_from_node(node: &Node, source: &str, file_path: &str, nodes: &mut Vec<CodeNode>) {
     let kind = node.kind();
 
     match kind {
@@ -86,7 +80,7 @@ fn extract_from_node(
     // Recurse into children
     for i in 0..node.child_count() {
         if let Some(child) = node.child(i) {
-            extract_from_node(&child, source, file_path, nodes, context);
+            extract_from_node(&child, source, file_path, nodes);
         }
     }
 }

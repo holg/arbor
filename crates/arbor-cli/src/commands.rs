@@ -350,11 +350,8 @@ pub fn status(path: &Path, show_files: bool) -> Result<()> {
     let result = index_directory(path, IndexOptions::default())?;
 
     // Collect unique files from indexed nodes
-    let files: std::collections::HashSet<_> = result
-        .graph
-        .nodes()
-        .map(|n| n.file.clone())
-        .collect();
+    let files: std::collections::HashSet<_> =
+        result.graph.nodes().map(|n| n.file.clone()).collect();
 
     // Collect unique extensions from indexed files
     let mut file_exts: std::collections::HashSet<String> = std::collections::HashSet::new();
@@ -917,7 +914,7 @@ fn suggest_similar_symbols(graph: &arbor_graph::ArborGraph, target: &str) -> Res
 
     // Find symbols with relevance scoring
     let target_lower = target.to_lowercase();
-    
+
     // (node, relevance_score, caller_count)
     // Relevance: 100 = exact name, 80 = exact suffix, 60 = starts with, 40 = contains
     let mut suggestions: Vec<(&arbor_core::CodeNode, u32, usize)> = Vec::new();
@@ -950,9 +947,7 @@ fn suggest_similar_symbols(graph: &arbor_graph::ArborGraph, target: &str) -> Res
     }
 
     // Sort by relevance first, then by caller count
-    suggestions.sort_by(|a, b| {
-        b.1.cmp(&a.1).then_with(|| b.2.cmp(&a.2))
-    });
+    suggestions.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| b.2.cmp(&a.2)));
 
     if suggestions.is_empty() {
         println!("No similar symbols found in the codebase.");
@@ -1097,10 +1092,7 @@ pub fn gui(path: &Path) -> Result<()> {
     std::env::set_current_dir(path)?;
 
     // Find the arbor-gui executable
-    let exe_dir = std::env::current_exe()?
-        .parent()
-        .unwrap()
-        .to_path_buf();
+    let exe_dir = std::env::current_exe()?.parent().unwrap().to_path_buf();
 
     #[cfg(target_os = "windows")]
     let gui_exe = exe_dir.join("arbor-gui.exe");
@@ -1115,7 +1107,11 @@ pub fn gui(path: &Path) -> Result<()> {
         println!("  GUI started. Analyzing: {}", path.display());
     } else {
         // Try cargo run as fallback for development
-        println!("  {} GUI executable not found at {:?}", "⚠".yellow(), gui_exe);
+        println!(
+            "  {} GUI executable not found at {:?}",
+            "⚠".yellow(),
+            gui_exe
+        );
         println!("  Running in development mode...");
         std::process::Command::new("cargo")
             .args(["run", "--package", "arbor-gui"])

@@ -47,7 +47,8 @@ impl ConfidenceExplanation {
         let level = if upstream_count == 0 && downstream_count == 0 {
             // Isolated node
             reasons.push("Node appears isolated (no detected connections)".to_string());
-            suggestions.push("Verify if this is called dynamically or from external code".to_string());
+            suggestions
+                .push("Verify if this is called dynamically or from external code".to_string());
             ConfidenceLevel::Low
         } else if upstream_count == 0 {
             // Entry point
@@ -66,15 +67,20 @@ impl ConfidenceExplanation {
             ConfidenceLevel::High
         } else {
             // Connected node
-            reasons.push(format!("{} callers, {} dependencies", upstream_count, downstream_count));
+            reasons.push(format!(
+                "{} callers, {} dependencies",
+                upstream_count, downstream_count
+            ));
 
             if total > 20 {
                 reasons.push("Large blast radius detected".to_string());
-                suggestions.push("Consider breaking this change into smaller refactors".to_string());
+                suggestions
+                    .push("Consider breaking this change into smaller refactors".to_string());
                 ConfidenceLevel::Medium
             } else if total > 50 {
                 reasons.push("Very large blast radius".to_string());
-                suggestions.push("This change affects a significant portion of the codebase".to_string());
+                suggestions
+                    .push("This change affects a significant portion of the codebase".to_string());
                 ConfidenceLevel::Low
             } else {
                 reasons.push("Well-connected with manageable impact".to_string());
@@ -84,7 +90,9 @@ impl ConfidenceExplanation {
 
         // Add structural insights
         if total > 0 {
-            let direct_count = analysis.upstream.iter()
+            let direct_count = analysis
+                .upstream
+                .iter()
                 .filter(|n| n.hop_distance == 1)
                 .count();
             if direct_count > 0 {

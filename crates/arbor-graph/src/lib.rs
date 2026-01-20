@@ -47,7 +47,10 @@ pub use builder::GraphBuilder;
 pub use confidence::{ConfidenceExplanation, ConfidenceLevel, NodeRole};
 pub use edge::{Edge, EdgeKind, GraphEdge};
 pub use graph::{ArborGraph, NodeId};
-pub use heuristics::{AnalysisWarning, HeuristicsMatcher, UncertainEdge, UncertainEdgeKind, detect_analysis_limitations};
+pub use heuristics::{
+    detect_analysis_limitations, AnalysisWarning, HeuristicsMatcher, UncertainEdge,
+    UncertainEdgeKind,
+};
 pub use impact::{AffectedNode, ImpactAnalysis, ImpactDirection, ImpactSeverity};
 pub use query::{DependentInfo, ImpactResult, NodeInfo, QueryResult};
 pub use ranking::{compute_centrality, CentralityScores};

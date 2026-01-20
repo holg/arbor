@@ -162,7 +162,10 @@ impl AnalysisWarning {
 pub fn detect_analysis_limitations(nodes: &[&CodeNode]) -> Vec<AnalysisWarning> {
     let mut warnings = Vec::new();
 
-    let callback_count = nodes.iter().filter(|n| HeuristicsMatcher::is_callback_style(n)).count();
+    let callback_count = nodes
+        .iter()
+        .filter(|n| HeuristicsMatcher::is_callback_style(n))
+        .count();
     if callback_count > 5 {
         warnings.push(AnalysisWarning::new(
             format!("Found {} callback-style nodes", callback_count),
@@ -170,7 +173,10 @@ pub fn detect_analysis_limitations(nodes: &[&CodeNode]) -> Vec<AnalysisWarning> 
         ));
     }
 
-    let event_handler_count = nodes.iter().filter(|n| HeuristicsMatcher::is_event_handler(n)).count();
+    let event_handler_count = nodes
+        .iter()
+        .filter(|n| HeuristicsMatcher::is_event_handler(n))
+        .count();
     if event_handler_count > 3 {
         warnings.push(AnalysisWarning::new(
             format!("Found {} event handlers", event_handler_count),
@@ -178,7 +184,10 @@ pub fn detect_analysis_limitations(nodes: &[&CodeNode]) -> Vec<AnalysisWarning> 
         ));
     }
 
-    let widget_count = nodes.iter().filter(|n| HeuristicsMatcher::is_flutter_widget(n)).count();
+    let widget_count = nodes
+        .iter()
+        .filter(|n| HeuristicsMatcher::is_flutter_widget(n))
+        .count();
     if widget_count > 0 {
         warnings.push(AnalysisWarning::new(
             format!("Detected {} Flutter widgets", widget_count),
@@ -201,7 +210,12 @@ mod tests {
         let state = CodeNode::new("HomeState", "HomeState", NodeKind::Class, "home.dart");
         assert!(HeuristicsMatcher::is_flutter_widget(&state));
 
-        let non_widget = CodeNode::new("UserService", "UserService", NodeKind::Class, "service.dart");
+        let non_widget = CodeNode::new(
+            "UserService",
+            "UserService",
+            NodeKind::Class,
+            "service.dart",
+        );
         assert!(!HeuristicsMatcher::is_flutter_widget(&non_widget));
     }
 
@@ -210,7 +224,12 @@ mod tests {
         let handler = CodeNode::new("onClick", "onClick", NodeKind::Function, "button.ts");
         assert!(HeuristicsMatcher::is_event_handler(&handler));
 
-        let handler2 = CodeNode::new("handleSubmit", "handleSubmit", NodeKind::Function, "form.ts");
+        let handler2 = CodeNode::new(
+            "handleSubmit",
+            "handleSubmit",
+            NodeKind::Function,
+            "form.ts",
+        );
         assert!(HeuristicsMatcher::is_event_handler(&handler2));
 
         let non_handler = CodeNode::new("calculate", "calculate", NodeKind::Function, "math.ts");
