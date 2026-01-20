@@ -54,6 +54,7 @@ pub struct ArborApp {
     show_file_path: bool,
 }
 
+#[rustfmt::skip]
 impl ArborApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self {
@@ -205,7 +206,9 @@ impl ArborApp {
     }
 }
 
+#[rustfmt::skip]
 impl eframe::App for ArborApp {
+    #[rustfmt::skip]
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Apply theme
         if self.dark_mode {
@@ -285,11 +288,18 @@ impl eframe::App for ArborApp {
                         } else {
                             // Spoiler box - click to reveal
                             let spoiler_text = "████████████████";
-                            if ui.add(egui::Button::new(
+                            let button = egui::Button::new(
                                 egui::RichText::new(spoiler_text)
                                     .background_color(egui::Color32::DARK_GRAY)
-                                    .color(egui::Color32::DARK_GRAY)
-                            ).frame(false)).on_hover_text("Click to reveal file path").clicked() {
+                                    .color(egui::Color32::DARK_GRAY),
+                            )
+                            .frame(false);
+
+                            if ui
+                                .add(button)
+                                .on_hover_text("Click to reveal file path")
+                                .clicked()
+                            {
                                 toggle_file_path = true;
                             }
                         }
