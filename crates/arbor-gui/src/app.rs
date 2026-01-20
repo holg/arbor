@@ -49,6 +49,9 @@ pub struct ArborApp {
 
     /// Show dependencies (collapsible)
     show_dependencies: bool,
+
+    /// Show file path (spoiler mode - click to reveal)
+    show_file_path: bool,
 }
 
 impl ArborApp {
@@ -64,6 +67,7 @@ impl ArborApp {
             search_history: Vec::new(),
             show_call_tree: true,
             show_dependencies: true,
+            show_file_path: false, // Hidden by default (spoiler mode)
         }
     }
 
@@ -256,26 +260,56 @@ impl eframe::App for ArborApp {
 
             ui.separator();
 
-            // Results section
-            if let Some(r) = &self.result {
+            // Results section - extract values to avoid borrow issues
+            let result_data = self.result.as_ref().map(|r| {
+                (r.target_name.clone(), r.target_file.clone(), r.role.clone(), 
+                 r.confidence.clone(), r.direct_callers.clone(), r.indirect_callers.clone(),
+                 r.downstream.clone(), r.total_affected)
+            });
+            
+            let mut toggle_file_path = false;
+            let mut toggle_hide_path = false;
+
+            if let Some((target_name, target_file, role, confidence, direct_callers, indirect_callers, downstream, total_affected)) = result_data {
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.heading(&r.target_name);
-                    ui.label(format!("File: {}", r.target_file));
+                    ui.heading(&target_name);
+                    
+                    // File path with Discord-style spoiler
+                    ui.horizontal(|ui| {
+                        ui.label("File:");
+                        if self.show_file_path {
+                            ui.label(egui::RichText::new(&target_file).monospace());
+                            if ui.small_button("🙈 Hide").clicked() {
+                                toggle_hide_path = true;
+                            }
+                        } else {
+                            // Spoiler box - click to reveal
+                            let spoiler_text = "████████████████";
+                            if ui.add(egui::Button::new(
+                                egui::RichText::new(spoiler_text)
+                                    .background_color(egui::Color32::DARK_GRAY)
+                                    .color(egui::Color32::DARK_GRAY)
+                            ).frame(false)).on_hover_text("Click to reveal file path").clicked() {
+                                toggle_file_path = true;
+                            }
+                        }
+                    });
+
                     ui.horizontal(|ui| {
                         ui.label("Role:");
-                        ui.label(egui::RichText::new(&r.role).strong());
+                        ui.label(egui::RichText::new(&role).strong());
                     });
                     ui.horizontal(|ui| {
                         ui.label("Confidence:");
-                        ui.label(&r.confidence);
+                        ui.label(&confidence);
                     });
 
                     ui.add_space(10.0);
 
                     // Direct callers
-                    if !r.direct_callers.is_empty() {
+                    if !direct_callers.is_empty() {
                         ui.label(egui::RichText::new("⚠️ Will break immediately:").strong().color(egui::Color32::RED));
-                        for c in &r.direct_callers {
+                        for c in &direct_callers {
                             ui.label(format!("  • {}", c));
                         }
                     }
@@ -283,40 +317,51 @@ impl eframe::App for ArborApp {
                     ui.add_space(5.0);
 
                     // Indirect callers
-                    if !r.indirect_callers.is_empty() {
+                    if !indirect_callers.is_empty() {
                         ui.label(egui::RichText::new("May break indirectly:").strong().color(egui::Color32::YELLOW));
-                        for c in r.indirect_callers.iter().take(5) {
+                        for c in indirect_callers.iter().take(5) {
                             ui.label(format!("  • {}", c));
                         }
-                        if r.indirect_callers.len() > 5 {
-                            ui.label(format!("  ... and {} more", r.indirect_callers.len() - 5));
+                        if indirect_callers.len() > 5 {
+                            ui.label(format!("  ... and {} more", indirect_callers.len() - 5));
                         }
                     }
 
                     ui.add_space(5.0);
 
                     // Downstream
-                    if !r.downstream.is_empty() {
+                    if !downstream.is_empty() {
                         ui.label(egui::RichText::new("Dependencies:").strong());
-                        for d in &r.downstream {
+                        for d in &downstream {
                             ui.label(format!("  └─ {}", d));
                         }
                     }
 
                     ui.add_space(10.0);
 
-                    ui.label(format!("Total affected: {} nodes", r.total_affected));
+                    ui.label(format!("Total affected: {} nodes", total_affected));
 
                     ui.add_space(10.0);
 
                     // Copy button
                     if ui.button("📋 Copy as Markdown").clicked() {
-                        let md = self.copy_as_markdown();
                         if let Ok(mut clipboard) = arboard::Clipboard::new() {
+                            let md = format!(
+                                "## Impact Analysis: {}\n\n**File:** `{}`\n**Role:** {}\n**Confidence:** {}\n**Total Affected:** {} nodes",
+                                target_name, target_file, role, confidence, total_affected
+                            );
                             let _ = clipboard.set_text(md);
                         }
                     }
                 });
+                
+                // Apply spoiler toggles after closure
+                if toggle_file_path {
+                    self.show_file_path = true;
+                }
+                if toggle_hide_path {
+                    self.show_file_path = false;
+                }
             } else {
                 ui.centered_and_justified(|ui| {
                     ui.label("Enter a function or class name above to analyze its impact.");
