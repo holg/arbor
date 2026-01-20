@@ -303,6 +303,8 @@ impl eframe::App for ArborApp {
                         ui.label("Confidence:");
                         ui.label(&confidence);
                     });
+                    // Confidence explainer
+                    ui.label(egui::RichText::new("Based on static call graph and resolved symbols.").small().weak());
 
                     ui.add_space(10.0);
 
@@ -329,11 +331,12 @@ impl eframe::App for ArborApp {
 
                     ui.add_space(5.0);
 
-                    // Downstream
+                    // Downstream dependencies with clearer labels
                     if !downstream.is_empty() {
                         ui.label(egui::RichText::new("Dependencies:").strong());
+                        ui.label(egui::RichText::new("This function calls these lower-level helpers.").small().weak());
                         for d in &downstream {
-                            ui.label(format!("  └─ {}", d));
+                            ui.label(format!("  → Calls {}", d));
                         }
                     }
 
