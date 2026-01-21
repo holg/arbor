@@ -337,7 +337,7 @@ pub fn export(path: &Path, output: &Path) -> Result<()> {
 }
 
 /// Show index status.
-pub fn status(path: &Path, files: bool) -> Result<()> {
+pub fn status(path: &Path, show_files: bool) -> Result<()> {
     let arbor_dir = path.join(".arbor");
 
     if !arbor_dir.exists() {
@@ -348,6 +348,10 @@ pub fn status(path: &Path, files: bool) -> Result<()> {
 
     // Quick index to get stats
     let result = index_directory(path, IndexOptions::default())?;
+
+    // Collect unique files from indexed nodes
+    let files: std::collections::HashSet<_> =
+        result.graph.nodes().map(|n| n.file.clone()).collect();
 
     // Collect unique extensions from indexed files
     let mut file_exts: std::collections::HashSet<String> = std::collections::HashSet::new();
@@ -374,7 +378,7 @@ pub fn status(path: &Path, files: bool) -> Result<()> {
     println!("  {} {}", "Nodes:".dimmed(), result.nodes_extracted);
     println!("  {} {}", "Edges:".dimmed(), result.graph.edge_count());
 
-    if files {
+    if show_files {
         println!();
         println!("  {}", "Extensions (by file count):".yellow());
         if ext_list.is_empty() {
@@ -400,6 +404,20 @@ pub fn status(path: &Path, files: bool) -> Result<()> {
                 top_exts.join(", ")
             }
         );
+    }
+
+    // Show files list if requested
+    if show_files {
+        println!();
+        println!("{}", "📁 Indexed Files".cyan().bold());
+        let mut sorted_files: Vec<_> = files.iter().collect();
+        sorted_files.sort();
+        for file in sorted_files.iter().take(50) {
+            println!("  {}", file.dimmed());
+        }
+        if files.len() > 50 {
+            println!("  {} ... and {} more", "".dimmed(), files.len() - 50);
+        }
     }
 
     // Show helpful tip if graph is empty
@@ -708,6 +726,32 @@ pub fn refactor(target: &str, max_depth: usize, show_why: bool, json_output: boo
     );
     println!();
 
+    // Compute and display confidence
+    let confidence = arbor_graph::ConfidenceExplanation::from_analysis(&analysis);
+    let role = arbor_graph::NodeRole::from_analysis(&analysis);
+
+    let confidence_color = match confidence.level {
+        arbor_graph::ConfidenceLevel::High => "green",
+        arbor_graph::ConfidenceLevel::Medium => "yellow",
+        arbor_graph::ConfidenceLevel::Low => "red",
+    };
+
+    println!(
+        "{}  {} | {}",
+        match confidence.level {
+            arbor_graph::ConfidenceLevel::High => "🟢",
+            arbor_graph::ConfidenceLevel::Medium => "🟡",
+            arbor_graph::ConfidenceLevel::Low => "🔴",
+        },
+        format!("Confidence: {}", confidence.level).color(confidence_color),
+        format!("Role: {}", role).dimmed()
+    );
+
+    for reason in &confidence.reasons {
+        println!("   • {}", reason.dimmed());
+    }
+    println!();
+
     // Determine the node's role
     let has_upstream = !analysis.upstream.is_empty();
     let has_downstream = !analysis.downstream.is_empty();
@@ -868,32 +912,42 @@ fn suggest_similar_symbols(graph: &arbor_graph::ArborGraph, target: &str) -> Res
     println!("{} Couldn't find \"{}\"", "🔍".yellow(), target.cyan());
     println!();
 
-    // Find symbols that contain the target or end with it
+    // Find symbols with relevance scoring
     let target_lower = target.to_lowercase();
-    let mut suggestions: Vec<(&arbor_core::CodeNode, usize)> = Vec::new();
+
+    // (node, relevance_score, caller_count)
+    // Relevance: 100 = exact name, 80 = exact suffix, 60 = starts with, 40 = contains
+    let mut suggestions: Vec<(&arbor_core::CodeNode, u32, usize)> = Vec::new();
 
     for node in graph.nodes() {
         let name_lower = node.name.to_lowercase();
         let id_lower = node.id.to_lowercase();
 
-        // Match by suffix, contains, or starts with
-        if name_lower == target_lower
-            || id_lower.ends_with(&format!("::{}", target_lower))
+        let relevance = if name_lower == target_lower {
+            100 // Exact name match
+        } else if id_lower.ends_with(&format!("::{}", target_lower))
             || id_lower.ends_with(&format!(".{}", target_lower))
-            || name_lower.contains(&target_lower)
         {
-            // Count callers for this node
-            let caller_count = if let Some(idx) = graph.get_index(&node.id) {
-                graph.analyze_impact(idx, 1).upstream.len()
-            } else {
-                0
-            };
-            suggestions.push((node, caller_count));
-        }
+            80 // Exact suffix match (e.g., "auth" matches "module::auth")
+        } else if name_lower.starts_with(&target_lower) {
+            60 // Starts with (e.g., "auth" matches "authenticate")
+        } else if name_lower.contains(&target_lower) {
+            40 // Contains (e.g., "auth" matches "user_auth_handler")
+        } else {
+            continue; // No match
+        };
+
+        // Count callers for this node
+        let caller_count = if let Some(idx) = graph.get_index(&node.id) {
+            graph.analyze_impact(idx, 1).upstream.len()
+        } else {
+            0
+        };
+        suggestions.push((node, relevance, caller_count));
     }
 
-    // Sort by caller count (most callers first)
-    suggestions.sort_by(|a, b| b.1.cmp(&a.1));
+    // Sort by relevance first, then by caller count
+    suggestions.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| b.2.cmp(&a.2)));
 
     if suggestions.is_empty() {
         println!("No similar symbols found in the codebase.");
@@ -906,7 +960,7 @@ fn suggest_similar_symbols(graph: &arbor_graph::ArborGraph, target: &str) -> Res
     }
 
     println!("{}", "Did you mean:".green());
-    for (i, (node, caller_count)) in suggestions.iter().take(3).enumerate() {
+    for (i, (node, _relevance, caller_count)) in suggestions.iter().take(3).enumerate() {
         let suffix = if *caller_count == 0 {
             "entry point".dimmed().to_string()
         } else {
@@ -1028,6 +1082,140 @@ pub fn explain(question: &str, max_tokens: usize, show_why: bool, json_output: b
     }
 
     Ok(())
+}
+
+/// Launch the graphical interface.
+pub fn gui(path: &Path) -> Result<()> {
+    println!("{} Launching Arbor GUI...", "🌲".green());
+
+    // Set the working directory for the GUI
+    std::env::set_current_dir(path)?;
+
+    // Find the arbor-gui executable
+    let exe_dir = std::env::current_exe()?.parent().unwrap().to_path_buf();
+
+    #[cfg(target_os = "windows")]
+    let gui_exe = exe_dir.join("arbor-gui.exe");
+    #[cfg(not(target_os = "windows"))]
+    let gui_exe = exe_dir.join("arbor-gui");
+
+    if gui_exe.exists() {
+        // Launch the GUI executable
+        std::process::Command::new(&gui_exe)
+            .spawn()
+            .map_err(|e| format!("Failed to launch GUI: {}", e))?;
+        println!("  GUI started. Analyzing: {}", path.display());
+    } else {
+        // Try cargo run as fallback for development
+        println!(
+            "  {} GUI executable not found at {:?}",
+            "⚠".yellow(),
+            gui_exe
+        );
+        println!("  Running in development mode...");
+        std::process::Command::new("cargo")
+            .args(["run", "--package", "arbor-gui"])
+            .current_dir(path)
+            .spawn()
+            .map_err(|e| format!("Failed to launch GUI: {}", e))?;
+    }
+
+    Ok(())
+}
+
+/// Generate a PR summary for refactored symbols.
+pub fn pr_summary(symbols: &str, path: &Path) -> Result<()> {
+    println!("{}", "📝 PR Summary Generator".cyan().bold());
+    println!();
+
+    // Index the codebase
+    let result = index_directory(path, IndexOptions::default())?;
+    let graph = result.graph;
+
+    let symbol_list: Vec<&str> = symbols.split(',').map(|s| s.trim()).collect();
+
+    println!("## Impact Analysis\n");
+    println!("The following symbols were modified:\n");
+
+    for symbol in &symbol_list {
+        // Find the node
+        let node_idx = graph.get_index(symbol).or_else(|| {
+            graph
+                .find_by_name(symbol)
+                .first()
+                .and_then(|n| graph.get_index(&n.id))
+        });
+
+        if let Some(idx) = node_idx {
+            let node = graph.get(idx).unwrap();
+            let analysis = graph.analyze_impact(idx, 3);
+            let confidence = arbor_graph::ConfidenceExplanation::from_analysis(&analysis);
+            let role = arbor_graph::NodeRole::from_analysis(&analysis);
+
+            println!("### `{}`", node.name);
+            println!();
+            println!("- **File:** `{}`", node.file);
+            println!("- **Role:** {}", role);
+            println!("- **Confidence:** {}", confidence.level);
+            println!("- **Total Affected:** {} nodes", analysis.total_affected);
+
+            if !analysis.upstream.is_empty() {
+                println!("\n**Callers that may be affected:**");
+                for caller in analysis.upstream.iter().take(5) {
+                    println!("- `{}`", caller.node_info.name);
+                }
+            }
+            println!();
+        } else {
+            println!("### `{}` (not found in graph)\n", symbol);
+        }
+    }
+
+    println!("---");
+    println!("*Generated by Arbor*");
+
+    Ok(())
+}
+
+/// Watch for file changes and re-index automatically.
+pub async fn watch(path: &Path) -> Result<()> {
+    use std::time::Duration;
+
+    println!("{}", "👁️  Watch Mode".cyan().bold());
+    println!("Watching: {}", path.display());
+    println!("Press Ctrl+C to stop.\n");
+
+    // Initial index
+    let mut last_result = index_directory(path, IndexOptions::default())?;
+    println!(
+        "✓ Initial index: {} files, {} nodes",
+        last_result.files_indexed, last_result.nodes_extracted
+    );
+
+    loop {
+        tokio::time::sleep(Duration::from_secs(2)).await;
+
+        // Re-index and check for changes
+        match index_directory(path, IndexOptions::default()) {
+            Ok(result) => {
+                if result.nodes_extracted != last_result.nodes_extracted
+                    || result.files_indexed != last_result.files_indexed
+                {
+                    println!(
+                        "🔄 Updated: {} files, {} nodes (was {} files, {} nodes)",
+                        result.files_indexed,
+                        result.nodes_extracted,
+                        last_result.files_indexed,
+                        last_result.nodes_extracted
+                    );
+                    last_result = result;
+                }
+            }
+            Err(e) => {
+                eprintln!("⚠ Index error: {}", e);
+            }
+        }
+    }
 }
 
 #[cfg(test)]

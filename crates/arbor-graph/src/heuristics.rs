@@ -1,0 +1,238 @@
+//! Heuristics for detecting runtime edges and framework patterns
+//!
+//! Real codebases aren't clean. This module provides best-effort detection of:
+//! - Dynamic/callback calls
+//! - Framework-specific patterns (Flutter widgets, etc.)
+//! - Possible runtime dependencies
+
+use arbor_core::{CodeNode, NodeKind};
+
+/// Types of uncertain edges
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum UncertainEdgeKind {
+    /// Callback or closure passed as argument
+    Callback,
+    /// Dynamic dispatch (trait objects, interfaces)
+    DynamicDispatch,
+    /// Framework widget tree (Flutter, React, etc.)
+    WidgetTree,
+    /// Event handler registration
+    EventHandler,
+    /// Dependency injection
+    DependencyInjection,
+    /// Reflection or runtime lookup
+    Reflection,
+}
+
+impl std::fmt::Display for UncertainEdgeKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UncertainEdgeKind::Callback => write!(f, "callback"),
+            UncertainEdgeKind::DynamicDispatch => write!(f, "dynamic dispatch"),
+            UncertainEdgeKind::WidgetTree => write!(f, "widget tree"),
+            UncertainEdgeKind::EventHandler => write!(f, "event handler"),
+            UncertainEdgeKind::DependencyInjection => write!(f, "dependency injection"),
+            UncertainEdgeKind::Reflection => write!(f, "reflection"),
+        }
+    }
+}
+
+/// An edge that might exist at runtime but cannot be proven statically
+#[derive(Debug, Clone)]
+pub struct UncertainEdge {
+    pub from: String,
+    pub to: String,
+    pub kind: UncertainEdgeKind,
+    pub confidence: f32, // 0.0 to 1.0
+    pub reason: String,
+}
+
+/// Pattern matchers for different frameworks and languages
+pub struct HeuristicsMatcher;
+
+impl HeuristicsMatcher {
+    /// Check if a node looks like a Flutter widget
+    pub fn is_flutter_widget(node: &CodeNode) -> bool {
+        // Widget classes typically extend StatelessWidget or StatefulWidget
+        node.kind == NodeKind::Class
+            && (node.name.ends_with("Widget")
+                || node.name.ends_with("State")
+                || node.name.ends_with("Page")
+                || node.name.ends_with("Screen")
+                || node.name.ends_with("View"))
+    }
+
+    /// Check if a node looks like a React component
+    pub fn is_react_component(node: &CodeNode) -> bool {
+        (node.kind == NodeKind::Function || node.kind == NodeKind::Class)
+            && node.file.ends_with(".tsx")
+            && node.name.chars().next().map_or(false, |c| c.is_uppercase())
+    }
+
+    /// Check if a node looks like an event handler
+    pub fn is_event_handler(node: &CodeNode) -> bool {
+        let name_lower = node.name.to_lowercase();
+        (node.kind == NodeKind::Function || node.kind == NodeKind::Method)
+            && (name_lower.starts_with("on")
+                || name_lower.starts_with("handle")
+                || name_lower.ends_with("handler")
+                || name_lower.ends_with("callback")
+                || name_lower.ends_with("listener"))
+    }
+
+    /// Check if a node looks like a callback parameter
+    pub fn is_callback_style(node: &CodeNode) -> bool {
+        let name_lower = node.name.to_lowercase();
+        name_lower.ends_with("fn")
+            || name_lower.ends_with("callback")
+            || name_lower.ends_with("handler")
+            || name_lower.starts_with("on_")
+    }
+
+    /// Check if a node looks like a factory or provider (DI pattern)
+    pub fn is_dependency_injection(node: &CodeNode) -> bool {
+        let name_lower = node.name.to_lowercase();
+        name_lower.ends_with("factory")
+            || name_lower.ends_with("provider")
+            || name_lower.ends_with("injector")
+            || name_lower.ends_with("container")
+            || name_lower.contains("singleton")
+    }
+
+    /// Infer uncertain edges from node patterns
+    pub fn infer_uncertain_edges(nodes: &[&CodeNode]) -> Vec<UncertainEdge> {
+        let mut edges = Vec::new();
+
+        for node in nodes {
+            // Event handlers likely connected to event sources
+            if Self::is_event_handler(node) {
+                edges.push(UncertainEdge {
+                    from: "event_source".to_string(),
+                    to: node.id.clone(),
+                    kind: UncertainEdgeKind::EventHandler,
+                    confidence: 0.7,
+                    reason: format!("'{}' looks like an event handler", node.name),
+                });
+            }
+
+            // Callbacks likely invoked dynamically
+            if Self::is_callback_style(node) {
+                edges.push(UncertainEdge {
+                    from: "caller".to_string(),
+                    to: node.id.clone(),
+                    kind: UncertainEdgeKind::Callback,
+                    confidence: 0.6,
+                    reason: format!("'{}' is likely passed as a callback", node.name),
+                });
+            }
+
+            // Flutter widgets part of widget tree
+            if Self::is_flutter_widget(node) {
+                edges.push(UncertainEdge {
+                    from: "parent_widget".to_string(),
+                    to: node.id.clone(),
+                    kind: UncertainEdgeKind::WidgetTree,
+                    confidence: 0.8,
+                    reason: format!("'{}' is a Flutter widget in the widget tree", node.name),
+                });
+            }
+        }
+
+        edges
+    }
+}
+
+/// Warnings about analysis limitations
+#[derive(Debug, Clone)]
+pub struct AnalysisWarning {
+    pub message: String,
+    pub suggestion: String,
+}
+
+impl AnalysisWarning {
+    pub fn new(message: impl Into<String>, suggestion: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            suggestion: suggestion.into(),
+        }
+    }
+}
+
+/// Check for common patterns that limit static analysis accuracy
+pub fn detect_analysis_limitations(nodes: &[&CodeNode]) -> Vec<AnalysisWarning> {
+    let mut warnings = Vec::new();
+
+    let callback_count = nodes
+        .iter()
+        .filter(|n| HeuristicsMatcher::is_callback_style(n))
+        .count();
+    if callback_count > 5 {
+        warnings.push(AnalysisWarning::new(
+            format!("Found {} callback-style nodes", callback_count),
+            "Callbacks may be invoked dynamically. Verify runtime behavior.",
+        ));
+    }
+
+    let event_handler_count = nodes
+        .iter()
+        .filter(|n| HeuristicsMatcher::is_event_handler(n))
+        .count();
+    if event_handler_count > 3 {
+        warnings.push(AnalysisWarning::new(
+            format!("Found {} event handlers", event_handler_count),
+            "Event handlers are connected at runtime. Check event sources.",
+        ));
+    }
+
+    let widget_count = nodes
+        .iter()
+        .filter(|n| HeuristicsMatcher::is_flutter_widget(n))
+        .count();
+    if widget_count > 0 {
+        warnings.push(AnalysisWarning::new(
+            format!("Detected {} Flutter widgets", widget_count),
+            "Widget tree hierarchy is determined at runtime.",
+        ));
+    }
+
+    warnings
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_flutter_widget_detection() {
+        let widget = CodeNode::new("HomeWidget", "HomeWidget", NodeKind::Class, "home.dart");
+        assert!(HeuristicsMatcher::is_flutter_widget(&widget));
+
+        let state = CodeNode::new("HomeState", "HomeState", NodeKind::Class, "home.dart");
+        assert!(HeuristicsMatcher::is_flutter_widget(&state));
+
+        let non_widget = CodeNode::new(
+            "UserService",
+            "UserService",
+            NodeKind::Class,
+            "service.dart",
+        );
+        assert!(!HeuristicsMatcher::is_flutter_widget(&non_widget));
+    }
+
+    #[test]
+    fn test_event_handler_detection() {
+        let handler = CodeNode::new("onClick", "onClick", NodeKind::Function, "button.ts");
+        assert!(HeuristicsMatcher::is_event_handler(&handler));
+
+        let handler2 = CodeNode::new(
+            "handleSubmit",
+            "handleSubmit",
+            NodeKind::Function,
+            "form.ts",
+        );
+        assert!(HeuristicsMatcher::is_event_handler(&handler2));
+
+        let non_handler = CodeNode::new("calculate", "calculate", NodeKind::Function, "math.ts");
+        assert!(!HeuristicsMatcher::is_event_handler(&non_handler));
+    }
+}

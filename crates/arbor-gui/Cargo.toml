@@ -1,0 +1,20 @@
+[package]
+name = "arbor-gui"
+version = "0.2.0"
+edition = "2021"
+description = "Arbor GUI - Impact-first code analysis interface"
+
+[dependencies]
+arbor-core = { path = "../arbor-core" }
+arbor-graph = { path = "../arbor-graph" }
+arbor-watcher = { path = "../arbor-watcher" }
+eframe = "0.28"
+egui = "0.28"
+egui_extras = { version = "0.28", features = ["all_loaders"] }
+image = { version = "0.25", features = ["jpeg", "png"] } # Required for image loading
+arboard = "3.4"  # Clipboard support
+resvg = "0.44"
+
+[[bin]]
+name = "arbor-gui"
+path = "src/main.rs"

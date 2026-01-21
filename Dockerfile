@@ -11,7 +11,7 @@ WORKDIR /app
 COPY crates/ ./crates/
 
 WORKDIR /app/crates
-RUN cargo build --release --bin arbor-cli
+RUN cargo build --release --bin arbor
 
 # Stage 2: Runtime
 FROM debian:bookworm-slim

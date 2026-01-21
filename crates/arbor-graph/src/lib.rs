@@ -28,8 +28,10 @@
 //! ```
 
 mod builder;
+mod confidence;
 mod edge;
 mod graph;
+mod heuristics;
 mod impact;
 mod query;
 mod ranking;
@@ -42,8 +44,13 @@ pub mod symbol_table;
 pub use search_index::SearchIndex;
 
 pub use builder::GraphBuilder;
+pub use confidence::{ConfidenceExplanation, ConfidenceLevel, NodeRole};
 pub use edge::{Edge, EdgeKind, GraphEdge};
 pub use graph::{ArborGraph, NodeId};
+pub use heuristics::{
+    detect_analysis_limitations, AnalysisWarning, HeuristicsMatcher, UncertainEdge,
+    UncertainEdgeKind,
+};
 pub use impact::{AffectedNode, ImpactAnalysis, ImpactDirection, ImpactSeverity};
 pub use query::{DependentInfo, ImpactResult, NodeInfo, QueryResult};
 pub use ranking::{compute_centrality, CentralityScores};
