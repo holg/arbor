@@ -32,6 +32,10 @@ pub fn parse_file(path: &Path) -> Result<Vec<CodeNode>> {
     let source = fs::read_to_string(path).map_err(|e| ParseError::io(path, e))?;
 
     if source.is_empty() {
+        // Empty __init__.py files are valid Python module indicators
+        if path.file_name().map(|n| n == "__init__.py").unwrap_or(false) {
+            return Ok(vec![]); // Return empty nodes, not an error
+        }
         return Err(ParseError::EmptyFile(path.to_path_buf()));
     }
 

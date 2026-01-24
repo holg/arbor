@@ -5,8 +5,10 @@ Get AI-ready code context in 5 minutes.
 ## Install
 
 ```bash
-cargo install arbor-graph-cli arbor-gui
+cargo install arbor-graph-cli
 ```
+
+> **Note:** The GUI is included in the binary. Run `arbor gui` after installation.
 
 ## Initialize
 
