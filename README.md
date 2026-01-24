@@ -79,16 +79,18 @@ arbor gui
 ## Quick Start
 
 ```bash
-# Install
-cargo install arbor-graph-cli arbor-gui
+# Install CLI (includes GUI via `arbor gui`)
+cargo install arbor-graph-cli
 
 # Run on any project
 cd your-project
 arbor refactor <function-name>
 
-# Or use the GUI
+# Or use the built-in GUI
 arbor gui
 ```
+
+> **Note:** The GUI is part of the main `arbor` binary. There is no separate `arbor-gui` crate on crates.io.
 
 > 📖 **More commands?** See the [5-minute Quickstart Guide](docs/QUICKSTART.md)
 
@@ -216,6 +218,10 @@ The visualizer exists to make AI reasoning **inspectable**. Every node an LLM to
 | **C#**         | ✅     | Classes, Methods, Properties, Interfaces, Structs |
 | **Dart**       | ✅     | Classes, Mixins, Methods, Widgets |
 
+> **Python Note:** Arbor uses static analysis with heuristic support for decorators, 
+> `__init__.py` module files, and common patterns like `@dataclass`. Dynamic dispatch 
+> via `getattr()` or `eval()` is marked as uncertain edges.
+
 ## Platform Support
 
 | Platform | CLI | GUI | Visualizer |
@@ -328,6 +334,15 @@ arbor/
 - Check that your files use supported extensions: `.rs`, `.ts`, `.tsx`, `.py`, `.dart`, `.go`.
 - Ensure files are not excluded by `.gitignore`.
 - Run `arbor status` to see which extensions were detected.
+
+### Why was my symbol not found?
+
+Common reasons:
+- **File excluded by `.gitignore`**: Arbor respects gitignore patterns. Check with `arbor status --files`.
+- **Unsupported extension**: Only `.rs`, `.ts`, `.tsx`, `.py`, `.dart`, `.go`, `.java`, `.c`, `.cpp`, `.cs` are indexed.
+- **Empty file**: Files with no content are skipped (except `__init__.py` module files).
+- **Dynamic-only function**: Functions only called via reflection/eval have no static edges.
+- **Typo**: Symbol names are case-sensitive. Try partial match with `arbor query <partial>`.
 
 ## Security
 

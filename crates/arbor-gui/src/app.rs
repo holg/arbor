@@ -172,7 +172,10 @@ impl ArborApp {
                 }
                 None => {
                     self.result = None;
-                    self.status = format!("Symbol '{}' not found.", target);
+                    self.status = format!(
+                        "Symbol '{}' not found. Try: arbor status --files to see indexed files.",
+                        target
+                    );
                 }
             }
         }
