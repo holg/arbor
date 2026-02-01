@@ -916,7 +916,7 @@ fn suggest_similar_symbols(graph: &arbor_graph::ArborGraph, target: &str) -> Res
     let target_lower = target.to_lowercase();
 
     // (node, relevance_score, caller_count)
-    // Relevance: 100 = exact name, 80 = exact suffix, 60 = starts with, 40 = contains
+    // Relevance: 100 = exact name, 80 = exact suffix, 60 = starts with, 40 = contains, 30 = fuzzy
     let mut suggestions: Vec<(&arbor_core::CodeNode, u32, usize)> = Vec::new();
 
     for node in graph.nodes() {
@@ -934,7 +934,13 @@ fn suggest_similar_symbols(graph: &arbor_graph::ArborGraph, target: &str) -> Res
         } else if name_lower.contains(&target_lower) {
             40 // Contains (e.g., "auth" matches "user_auth_handler")
         } else {
-            continue; // No match
+            // Fuzzy matching using Jaro-Winkler similarity (good for typos)
+            let similarity = strsim::jaro_winkler(&name_lower, &target_lower);
+            if similarity > 0.75 {
+                30 // Fuzzy match (e.g., "autth" → "auth")
+            } else {
+                continue; // No match
+            }
         };
 
         // Count callers for this node
