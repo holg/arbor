@@ -24,6 +24,10 @@
 - **GUI Version Watermark** — "Arbor v1.5" badge for brand visibility in screenshots
 - **Better Python UX** — Empty `__init__.py` handled silently (no false warnings)
 
+<p align="center">
+  <img src="docs/assets/arbor-demo.gif" alt="Arbor refactor demo" width="700" />
+</p>
+
 ## Overview
 
 Arbor is a local-first impact analysis engine for large codebases. Unlike traditional search or RAG which relies on keyword similarity, Arbor parses your code into a semantic graph, allowing you to trace actual execution paths and dependencies.
