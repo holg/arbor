@@ -752,6 +752,104 @@ pub fn refactor(target: &str, max_depth: usize, show_why: bool, json_output: boo
     }
     println!();
 
+    // ========== --why VERBOSE OUTPUT ==========
+    if show_why {
+        println!("{}", "═══ Detailed Analysis (--why) ═══".cyan().bold());
+        println!();
+
+        // 1. Why this confidence level?
+        println!("{}", "📊 Why this confidence level?".cyan());
+        match confidence.level {
+            arbor_graph::ConfidenceLevel::High => {
+                println!("   • High caller count indicates well-integrated code");
+                println!("   • Clear static call graph with minimal uncertainty");
+            }
+            arbor_graph::ConfidenceLevel::Medium => {
+                println!("   • Moderate caller count or some uncertain edges");
+                println!("   • May have dynamic dispatch or callback patterns");
+            }
+            arbor_graph::ConfidenceLevel::Low => {
+                println!("   • Few or no callers detected statically");
+                println!("   • May be called via reflection, DI, or externally");
+            }
+        }
+        println!();
+
+        // 2. Check for heuristics fired
+        let all_nodes: Vec<_> = analysis.all_affected().iter().map(|a| &a.node_info).collect();
+        let all_node_refs: Vec<_> = graph.nodes().take(100).collect(); // Sample for heuristics
+        
+        let callbacks: Vec<_> = all_node_refs.iter()
+            .filter(|n| arbor_graph::HeuristicsMatcher::is_callback_style(n))
+            .take(3)
+            .collect();
+        let event_handlers: Vec<_> = all_node_refs.iter()
+            .filter(|n| arbor_graph::HeuristicsMatcher::is_event_handler(n))
+            .take(3)
+            .collect();
+        let widgets: Vec<_> = all_node_refs.iter()
+            .filter(|n| arbor_graph::HeuristicsMatcher::is_flutter_widget(n))
+            .take(3)
+            .collect();
+        let di_nodes: Vec<_> = all_node_refs.iter()
+            .filter(|n| arbor_graph::HeuristicsMatcher::is_dependency_injection(n))
+            .take(3)
+            .collect();
+
+        println!("{}", "🔍 Heuristics detected in codebase:".cyan());
+        if callbacks.is_empty() && event_handlers.is_empty() && widgets.is_empty() && di_nodes.is_empty() {
+            println!("   • None detected (clean static analysis)");
+        } else {
+            if !callbacks.is_empty() {
+                println!("   • {} callback-style nodes (may be invoked dynamically)", callbacks.len());
+                for cb in &callbacks {
+                    println!("     └─ {}", cb.name.dimmed());
+                }
+            }
+            if !event_handlers.is_empty() {
+                println!("   • {} event handlers (connected at runtime)", event_handlers.len());
+                for eh in &event_handlers {
+                    println!("     └─ {}", eh.name.dimmed());
+                }
+            }
+            if !widgets.is_empty() {
+                println!("   • {} Flutter widgets (tree determined at runtime)", widgets.len());
+            }
+            if !di_nodes.is_empty() {
+                println!("   • {} DI/factory patterns (may bypass static calls)", di_nodes.len());
+            }
+        }
+        println!();
+
+        // 3. Why were callers included/excluded?
+        println!("{}", "📥 Why callers were included:".cyan());
+        if analysis.upstream.is_empty() {
+            println!("   • No static callers found in indexed files");
+            println!("   • Check: external entry points, tests, or dynamic invocation");
+        } else {
+            println!("   • {} nodes call this directly or transitively", analysis.upstream.len());
+            for caller in analysis.upstream.iter().take(3) {
+                println!(
+                    "     └─ {} via {}",
+                    caller.node_info.name,
+                    caller.entry_edge.to_string().dimmed()
+                );
+            }
+        }
+        println!();
+
+        println!("{}", "📤 Why dependencies were included:".cyan());
+        if analysis.downstream.is_empty() {
+            println!("   • This is a leaf node (no outgoing calls)");
+        } else {
+            println!("   • {} nodes are called by this function", analysis.downstream.len());
+        }
+        println!();
+        
+        println!("{}", "════════════════════════════════".dimmed());
+        println!();
+    }
+
     // Determine the node's role
     let has_upstream = !analysis.upstream.is_empty();
     let has_downstream = !analysis.downstream.is_empty();
